@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Portfolio • CryptoTradingX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="portfolio.css" />
+</head>
+<body class="page">
+  <header class="topbar">
+    <div class="header-left">
+      <h1 class="brand">CryptoTradingX</h1>
+      <nav class="tabs">
+        <a href="../markets/market.html" class="tab">Markets</a>
+        <a href="../trade/trade.html" class="tab">Trade</a>
+        <a href="../orders/orders.html" class="tab">Orders</a>
+        <a href="portfolio.html" class="tab active">Portfolio</a>
+      </nav>
+    </div>
+    <button id="logoutBtn">Logout</button>
+  </header>
+  <main class="content">
+    <div class="section-pad">
+      <div class="portfolio-wrap">
+        <div class="portfolio-chart"><canvas id="portfolioChart"></canvas></div>
+        <div id="portfolioLegend" class="portfolio-legend"></div>
+      </div>
+    </div>
+  </main>
+  <script src="../config.js"></script>
+  <script src="../utils.js"></script>
+  <script src="portfolio.js"></script>
+</body>
+</html>

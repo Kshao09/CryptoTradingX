@@ -1,8 +1,6 @@
-// If already logged in, go to portal
+// If already logged in, go to markets page
 const tokenExisting = localStorage.getItem('token');
-if (tokenExisting) location.replace('../portal.html');
-
-const $ = (s) => document.querySelector(s);
+if (tokenExisting) location.replace('../markets/market.html');
 
 /* ---------- Mode toggle ---------- */
 const panels = { signup: $('#signupPanel'), login: $('#loginPanel') };
@@ -160,8 +158,8 @@ $('#loginForm').addEventListener('submit', async (e) => {
   liMsg.textContent = 'Signing in...';
   try {
     const data = await postJSON('/api/auth/login', { email: liEmail.value.trim(), password: liPass.value });
-    localStorage.setItem('token', data.token);
-    location.replace('../portal.html');
+  localStorage.setItem('token', data.token);
+  location.replace('../markets/market.html');
   } catch (err) {
     liMsg.textContent = err.message;
   }

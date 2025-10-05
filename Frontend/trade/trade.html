@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Trade • CryptoTradingX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="trade.css" />
+</head>
+<body class="page">
+  <header class="topbar">
+    <div class="header-left">
+      <h1 class="brand">CryptoTradingX</h1>
+      <nav class="tabs">
+        <a href="../markets/market.html" class="tab">Markets</a>
+        <a href="trade.html" class="tab active">Trade</a>
+        <a href="../orders/orders.html" class="tab">Orders</a>
+        <a href="../portfolio/portfolio.html" class="tab">Portfolio</a>
+      </nav>
+    </div>
+    <button id="logoutBtn">Logout</button>
+  </header>
+  <main class="content">
+    <section class="trade-bar">
+      <div class="col-span-2">
+        <label>Symbol</label>
+        <select id="symbol"></select>
+      </div>
+      <div class="col-span-1">
+        <label>Side</label>
+        <select id="side"><option>BUY</option><option>SELL</option></select>
+      </div>
+      <div class="col-span-1">
+        <label>Type</label>
+        <select id="type"><option>MARKET</option><option>LIMIT</option></select>
+      </div>
+      <div class="col-span-2 hidden" id="priceWrap">
+        <label>Limit price</label>
+        <input id="price" type="number" step="0.01" />
+      </div>
+      <div class="col-span-1">
+        <label>Quantity</label>
+        <input id="qty" type="number" step="0.0001" />
+      </div>
+      <div class="submit-wrap">
+        <button class="btn" id="submitOrderBtn">Submit order</button>
+      </div>
+    </section>
+    <p id="tradeMsg" class="msg section-pad"></p>
+    <form id="orderForm"></form>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="../utils.js"></script>
+  <script src="trade.js"></script>
+</body>
+</html>

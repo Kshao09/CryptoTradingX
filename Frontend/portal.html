@@ -7,34 +7,57 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="page">
-  <!-- Top bar -->
   <header class="topbar">
-    <h1>CryptoTradingX</h1>
-    <nav class="topnav">
-      <button id="logoutBtn" class="btn outline">Logout</button>
-    </nav>
-  </header>
+    <div class="header-left">
+      <h1 class="brand">CryptoTradingX</h1>
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <button data-view="markets" class="active">Markets</button>
-    <button data-view="trade">Trade</button>
-    <button data-view="orders">Orders</button>
-    <button data-view="portfolio">Portfolio</button>
-  </aside>
+      <!-- nav tabs live inside the header -->
+      <nav class="tabs">
+        <button data-view="markets" class="tab active">Markets</button>
+        <button data-view="trade"   class="tab">Trade</button>
+        <button data-view="orders"  class="tab">Orders</button>
+        <button data-view="portfolio" class="tab">Portfolio</button>
+      </nav>
+    </div>
+
+    <button id="logoutBtn">Logout</button>
+  </header>
 
   <!-- Main content -->
   <main class="content">
     <!-- Markets -->
     <section id="view-markets" class="view active">
-      <div class="cards">
-        <div class="card">
-          <h3>BTC-USD</h3>
-          <div id="btcPrice">--</div>
+      <div class="section-pad">
+        <div class="search-wrap">
+          <input id="marketSearch" type="search" placeholder="Search by name or symbol (e.g. Bitcoin, BTC)" />
         </div>
-        <div class="card">
-          <h3>ETH-USD</h3>
-          <div id="ethPrice">--</div>
+
+        <div class="table-wrap">
+          <table class="table table-markets" id="marketsTable">
+            <colgroup>
+              <col class="market-col" />
+              <col class="market-col" />
+              <col class="market-col" />
+              <col class="market-col" />
+              <col class="market-col" />
+              <col class="market-col" />
+              <col class="market-col" />
+              <col class="market-col" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Price (USD)</th>
+                <th>24h %</th>
+                <th>7d %</th>
+                <th>30d %</th>
+                <th>Volume 24h</th>
+                <th>Market Cap</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -66,7 +89,8 @@
           </select>
         </div>
 
-        <div class="col-span-2" id="priceWrap" style="display:none">
+        <!-- hidden handled via CSS class -->
+        <div class="col-span-2 hidden" id="priceWrap">
           <label>Limit price</label>
           <input id="price" type="number" step="0.01" />
         </div>
@@ -83,13 +107,22 @@
 
       <p id="tradeMsg" class="msg section-pad"></p>
 
-      <!-- hidden form; app.js listens for its submit -->
-      <form id="orderForm" style="display:none"></form>
+      <!-- invisible form hook for app.js -->
+      <form id="orderForm"></form>
     </section>
 
     <!-- Orders -->
     <section id="view-orders" class="view">
-      <table class="table" id="ordersTable">
+      <table class="table table-orders" id="ordersTable">
+        <colgroup>
+          <col class="col-id" />
+          <col class="col-symbol" />
+          <col class="col-side" />
+          <col class="col-type" />
+          <col class="col-qty" />
+          <col class="col-price" />
+          <col class="col-status" />
+        </colgroup>
         <thead>
           <tr>
             <th>ID</th><th>Symbol</th><th>Side</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th>
@@ -99,21 +132,26 @@
       </table>
     </section>
 
-    <!-- Portfolio -->
+    <!-- Portfolio (interactive chart) -->
     <section id="view-portfolio" class="view">
-      <table class="table" id="portfolioTable">
-        <thead>
-          <tr><th>Asset</th><th>Balance</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="section-pad">
+        <div class="portfolio-wrap">
+          <div class="portfolio-chart">
+            <canvas id="portfolioChart"></canvas>
+          </div>
+          <div id="portfolioLegend" class="portfolio-legend"></div>
+        </div>
+      </div>
     </section>
   </main>
 
   <script src="config.js"></script>
+  <script src="utils.js"></script>
+  <link rel="stylesheet" href="modal/modal.css" />
+  <script src="modal/modal.js"></script>
   <script src="app.js"></script>
   <script>
-    // trigger the existing #orderForm submit handler when the visible button is clicked
+    // Trigger existing #orderForm submit handler
     document.getElementById('submitOrderBtn')?.addEventListener('click', (e) => {
       e.preventDefault();
       document.getElementById('orderForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));

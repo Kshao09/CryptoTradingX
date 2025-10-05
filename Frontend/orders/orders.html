@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Orders • CryptoTradingX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="orders.css" />
+</head>
+<body class="page">
+  <header class="topbar">
+    <div class="header-left">
+      <h1 class="brand">CryptoTradingX</h1>
+      <nav class="tabs">
+        <a href="../markets/market.html" class="tab">Markets</a>
+        <a href="../trade/trade.html" class="tab">Trade</a>
+        <a href="orders.html" class="tab active">Orders</a>
+        <a href="../portfolio/portfolio.html" class="tab">Portfolio</a>
+      </nav>
+    </div>
+    <button id="logoutBtn">Logout</button>
+  </header>
+  <main class="content">
+    <section class="section-pad">
+      <table class="table table-orders" id="ordersTable">
+        <colgroup>
+          <col class="col-id" />
+          <col class="col-symbol" />
+          <col class="col-side" />
+          <col class="col-type" />
+          <col class="col-qty" />
+          <col class="col-price" />
+          <col class="col-status" />
+        </colgroup>
+        <thead><tr><th>ID</th><th>Symbol</th><th>Side</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="../config.js"></script>
+  <script src="../utils.js"></script>
+  <script src="orders.js"></script>
+</body>
+</html>

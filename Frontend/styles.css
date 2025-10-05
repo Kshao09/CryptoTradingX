@@ -1,29 +1,45 @@
-/* ---------- Theme ---------- */
+/* ========= Base / Theme (keep yours if you already have it) ========= */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
 :root{
-  --bg:#0f1624;
-  --panel:#121b2b;
-  --panel-2:#0b121f;
-  --border:#1f2a3b;
-  --text:#e6eefc;
-  --muted:#9fb3d1;
-  --accent:#2c89ff;
-  --accent2:#1db954;
+  /* Graphite + teal trading theme */
+  --bg:        #0b1016;
+  --panel:     #0e1621;
+  --panel-2:   #0a121b;
+  --border:    #152235;
+
+  --text:      #e8eef7;
+  --muted:     #9bb0c9;
+
+  /* UI accents */
+  --accent:    #22d3ee;  /* cyan/teal for focus/links */
+  --accent2:   #16c784;  /* BUY green for primary CTA */
+
+  /* Trading semantics */
+  --buy:       #16c784;  /* up/positive */
+  --sell:      #ef4444;  /* down/negative */
+  --danger:    #ef4444;  /* destructive (logout) */
+  --warn:      #f59e0b;  /* warnings/notice */
 }
+
 
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);background:var(--bg)}
 
-/* ---------- Buttons, inputs, tables ---------- */
+/* ========= Utilities ========= */
+.hidden{display:none !important;}
+.num{font-variant-numeric:tabular-nums}
+
+/* ========= Buttons / Inputs ========= */
 button,.btn{
   background:var(--accent2); color:#0b121f; border:none; border-radius:10px;
   padding:10px 14px; font-weight:700; cursor:pointer;
-  transition:transform .06s ease, filter .15s ease;
+  transition:transform .08s ease, filter .15s ease, box-shadow .15s ease;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
 }
-button:hover,.btn:hover{filter:brightness(1.06)}
-button:active,.btn:active{transform:translateY(1px)}
+button:hover,.btn:hover{filter:brightness(1.06); box-shadow:0 10px 22px rgba(0,0,0,.35); transform:translateY(-1px)}
+button:active,.btn:active{transform:translateY(0) scale(.98)}
 .btn.secondary{background:var(--accent); color:#fff}
 .btn.outline{background:transparent; border:1px solid var(--accent); color:var(--accent)}
 
@@ -34,51 +50,238 @@ input,select{
 }
 input:focus,select:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(44,137,255,.15)}
 
-.table{width:100%; border-collapse:collapse}
-.table th,.table td{border-bottom:1px solid var(--border); padding:10px 8px; color:var(--text)}
-.table th{color:var(--muted); font-weight:600}
+/* ========= Layout ========= */
+/* Use a single-column page grid by default (no sidebar on this app). */
+.page{display:grid; grid-template-columns:1fr; grid-template-rows:64px 1fr; min-height:100vh; height:100vh; overflow:hidden}
 
-/* ---------- Page layout ---------- */
-.page{
-  display:grid; grid-template-columns:240px 1fr; grid-template-rows:56px 1fr; min-height:100vh;
-}
-
+/* Topbar with subtle glass: render as a horizontal flex header so
+   brand, tabs and actions align nicely across the top. */
 .topbar{
-  grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between;
-  padding:0 16px; border-bottom:1px solid var(--border);
-  background:rgba(10,16,28,.6); backdrop-filter:blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:0 20px;
+  height:64px;
+  background: rgba(9,14,22,.6);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(6px);
 }
-.topbar h1{font-size:20px; margin:0}
-.topnav{display:flex; align-items:center; gap:8px}
 
-.sidebar{
-  grid-row:2; padding:16px; border-right:1px solid var(--border);
-  display:flex; flex-direction:column; gap:10px
-}
+/* Sidebar look & hover */
 .sidebar button{
-  text-align:left; width:100%;
-  background:#162233; color:#cfe2ff; border:1px solid #1e2b43;
+  background: #101a27;
+  border: 1px solid #1b2a3d;
+  color: #d7e4f7;
 }
-.sidebar button.active{background:#1b2942; border-color:#2c3e63}
+.sidebar button:hover{
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px rgba(34,211,238,.08);
+}
+.sidebar button.active{
+  background: #132132;
+  border-color: #27405c;
+  box-shadow: inset 0 0 0 1px rgba(34,211,238,.12);
+}
 
-.content{padding:24px; overflow:auto}
-.view{display:none} .view.active{display:block}
+/* Price coloring helpers (use in DOM if you want) */
+.price-up    { color: var(--buy);   font-variant-numeric: tabular-nums; }
+.price-down  { color: var(--sell);  font-variant-numeric: tabular-nums; }
+.neutral     { color: var(--text);  font-variant-numeric: tabular-nums; }
 
-/* ---------- Markets cards ---------- */
-.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px}
-.card{background:#121b2b; border:1px solid var(--border); border-radius:12px; padding:16px}
-.card h3{margin:0 0 6px 0}
+/* Main content padding (single canonical definition) */
+.content{ padding:28px; height:calc(100vh - 64px); overflow: hidden }
+.view{ display:none } .view.active{ display:block }
 
-/* ---------- Trade bar ---------- */
+.cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px }
+.card{ background:#121b2b; border:1px solid var(--border); border-radius:12px; padding:16px }
+.card h3{ margin:0 0 6px 0 }
+
+/* Topbar inner pieces */
+.brand{
+  font-size:18px; font-weight:700; letter-spacing:0.2px;
+  margin:0; color:var(--text);
+}
+
+.tabs{ display:flex; gap:8px; align-items:center }
+.tabs .tab{
+  background:transparent; border:0; color:var(--muted);
+  padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+}
+.tabs .tab:hover{ color:var(--accent); background:rgba(34,211,238,.04) }
+.tabs .tab.active{
+  color:var(--text); background:linear-gradient(180deg, #0f2732, #092029);
+  box-shadow:0 6px 16px rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.02);
+}
+
+/* Ensure main content uses full width and good padding */
+/* ...existing code... */
+
+/* Left side of the topbar: brand + tabs grouped */
+.header-left{ display:flex; gap:18px; align-items:center }
+
+/* small screens: stack brand above tabs to prevent overflow */
+@media (max-width:720px){
+  .header-left{ flex-direction:column; align-items:flex-start; gap:8px }
+  .tabs{ flex-wrap:wrap }
+  .page{ grid-template-rows: auto 1fr }
+}
+
+/* ---------- Markets table + search ---------- */
+.section-pad{ padding:8px 0 }
+.search-wrap{ margin:8px 0 16px 0; display:flex }
+.search-wrap input[type="search"]{
+  width:420px; max-width:100%; padding:10px 12px; border-radius:10px; border:1px solid #22314c;
+  background:var(--panel-2); color:var(--text); outline:none;
+}
+.table-markets th, .table-markets td{ padding:12px 14px; }
+.table-markets tbody tr:hover{ background: rgba(255,255,255,0.01) }
+.table-markets td.col-price, .table-markets td.col-change{ text-align:right; font-variant-numeric:tabular-nums }
+.table-markets td.col-change.price-up{ color:var(--buy) }
+.table-markets td.col-change.price-down{ color:var(--sell) }
+
+.table-wrap{ max-height:60vh; overflow:auto; border:1px solid var(--border); border-radius:12px; padding:6px }
+
+/* Column sizing and header alignment for markets table */
+.table-markets col.market-col{ width:12.5% }
+
+.table-markets th, .table-markets td{ text-align:left }
+.table-markets th:nth-child(3), .table-markets td:nth-child(3),
+.table-markets th:nth-child(4), .table-markets td:nth-child(4),
+.table-markets th:nth-child(5), .table-markets td:nth-child(5),
+.table-markets th:nth-child(6), .table-markets td:nth-child(6),
+.table-markets th:nth-child(7), .table-markets td:nth-child(7),
+.table-markets th:nth-child(8), .table-markets td:nth-child(8){ text-align:right }
+
+/* Modal for market chart */
+/* Modal styles moved to modal/modal.css (keep modal component styles there) */
+
+/* Portfolio chart layout */
+.portfolio-wrap{ display:flex; gap:20px; align-items:flex-start }
+.portfolio-chart{ flex:1; min-width:220px }
+.portfolio-legend{ width:260px; display:flex; flex-direction:column; gap:8px }
+.portfolio-legend .legend-item{ display:flex; gap:8px; align-items:center }
+.legend-swatch{ width:14px; height:14px; border-radius:3px; }
+.legend-label{ color:var(--muted); font-size:13px }
+
+/* compact number style helper */
+.num-compact{ font-variant-numeric:tabular-nums }
+
+/* ---------- Trade bar layout & alignment ---------- */
 .trade-bar{
-  background:#0e1726; border:1px solid var(--border); border-radius:16px; padding:14px;
-  display:grid; grid-template-columns: repeat(8, minmax(0,1fr)); gap:10px; align-items:center;
-  margin-bottom: 8px;
+  background:#0e1726;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+  /* 5 fields + button on one row */
+  display:grid;
+  grid-template-columns: 2.2fr 1.2fr 1.4fr 1.4fr 1.4fr auto;
+  column-gap:16px;
+  align-items:end;                /* bottom-align every column */
 }
-.trade-bar label{color:var(--muted); font-size:12px}
-.trade-bar .col-span-2{grid-column: span 2}
-.trade-bar .col-span-1{grid-column: span 1}
-.trade-bar .submit-wrap{display:flex; justify-content:flex-start}
 
-/* spacing below trade bar */
-.section-pad{margin-top:18px}
+/* Each column is a vertical stack: label on top, control below */
+.trade-bar > div{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.trade-bar label{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1;
+}
+
+/* Same height for all controls */
+.trade-bar select,
+.trade-bar input{
+  height:44px;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #22314c;
+  background:var(--panel-2);
+  color:var(--text);
+}
+
+/* Submit button aligns with the bottom of inputs and matches height */
+.trade-bar .submit-wrap{
+  align-self:end;                 /* bottom-align the button cell */
+}
+.trade-bar .submit-wrap .btn{
+  height:44px;
+  padding:0 18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* When the limit-price field is hidden, the grid still aligns nicely */
+/* ...existing code... */
+
+/* Responsive: wrap to two rows on narrower screens */
+@media (max-width: 980px){
+  .trade-bar{
+    grid-template-columns: 1fr 1fr;
+    row-gap:14px;
+  }
+  .trade-bar .submit-wrap{ grid-column: 1 / -1; justify-self:start; }
+}
+
+
+/* ========= Tables: widths + alignment (no inline styles) ========= */
+.table{
+  table-layout:fixed; width:100%; border-collapse:collapse;
+}
+.table th,.table td{
+  padding:12px 14px; border-bottom:1px solid var(--border);
+  vertical-align:middle; white-space:nowrap;
+}
+.table th{ color:var(--muted); font-weight:600 }
+
+/* Orders: set column widths via <col> classes */
+.table-orders col.col-id{width:70px}
+.table-orders col.col-symbol{width:160px}
+.table-orders col.col-side{width:130px}
+.table-orders col.col-type{width:140px}
+.table-orders col.col-qty{width:140px}
+.table-orders col.col-price{width:140px}
+/* Status col fills remaining width */
+
+/* Orders: alignment by column index */
+.table-orders th:nth-child(1), .table-orders td:nth-child(1){ text-align:right }
+.table-orders th:nth-child(2), .table-orders td:nth-child(2){ text-align:left }
+.table-orders th:nth-child(3), .table-orders td:nth-child(3),
+.table-orders th:nth-child(4), .table-orders td:nth-child(4),
+.table-orders th:nth-child(7), .table-orders td:nth-child(7){ text-align:center }
+.table-orders th:nth-child(5), .table-orders td:nth-child(5),
+.table-orders th:nth-child(6), .table-orders td:nth-child(6){ text-align:right; font-variant-numeric:tabular-nums }
+
+/* Portfolio widths via <col> classes */
+.table-portfolio col.col-asset{width:180px}
+/* balance column flexes */
+
+/* Portfolio alignment */
+.table-portfolio th:nth-child(1), .table-portfolio td:nth-child(1){ text-align:left }
+.table-portfolio th:nth-child(2), .table-portfolio td:nth-child(2){ text-align:right; font-variant-numeric:tabular-nums }
+
+/* Logout as a red "danger" action */
+#logoutBtn{
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: transform .08s ease, filter .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+#logoutBtn:hover{
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(239,68,68,.35);
+  transform: translateY(-1px);
+}
+#logoutBtn:active{
+  transform: translateY(0) scale(.98);
+}

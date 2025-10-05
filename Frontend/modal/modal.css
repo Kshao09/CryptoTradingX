@@ -1,0 +1,16 @@
+/* Modal component styles (responsive) */
+.mt-modal-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,6,10,.6); z-index:1000 }
+.mt-modal-overlay.hidden{ display:none }
+.mt-modal{ background:var(--panel); border:1px solid var(--border); padding:16px; border-radius:12px; width:94%; max-width:1100px; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+.mt-modal .mt-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px }
+.mt-modal .mt-title{ font-size:16px; font-weight:700 }
+.mt-modal .mt-actions{ display:flex; gap:8px }
+.mt-modal canvas{ width:100% !important; height:420px !important }
+.mt-ranges{ display:flex; gap:8px; align-items:center }
+.mt-ranges button{ padding:6px 10px; border-radius:8px; border:1px solid transparent; background:transparent; color:var(--muted); cursor:pointer }
+.mt-ranges button.active{ background:linear-gradient(180deg,#0f2732,#092029); color:var(--text); border:1px solid rgba(255,255,255,.03) }
+
+@media (max-width:720px){
+  .mt-modal canvas{ height:260px !important }
+  .mt-modal{ padding:12px }
+}

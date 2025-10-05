@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Markets • CryptoTradingX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="../modal/modal.css" />
+  <link rel="stylesheet" href="market.css" />
+</head>
+<body class="page">
+  <header class="topbar">
+    <div class="header-left">
+      <h1 class="brand">CryptoTradingX</h1>
+      <nav class="tabs">
+        <a href="../markets/market.html" class="tab active">Markets</a>
+        <a href="../trade/trade.html" class="tab">Trade</a>
+        <a href="../orders/orders.html" class="tab">Orders</a>
+        <a href="../portfolio/portfolio.html" class="tab">Portfolio</a>
+      </nav>
+    </div>
+    <button id="logoutBtn">Logout</button>
+  </header>
+
+  <main class="content">
+    <section class="section-pad">
+      <div class="search-wrap">
+        <input id="marketSearch" type="search" placeholder="Search by name or symbol (e.g. Bitcoin, BTC)" />
+      </div>
+        <div id="marketStatus" class="section-pad" aria-live="polite"></div>
+      <div class="table-wrap">
+        <table class="table table-markets" id="marketsTable">
+          <colgroup>
+            <col class="market-col" /> <!-- logo -->
+            <col class="market-col" /> <!-- symbol -->
+            <col class="market-col" /> <!-- rank -->
+            <col class="market-col" />
+            <col class="market-col" />
+            <col class="market-col" />
+            <col class="market-col" />
+            <col class="market-col" />
+            <col class="market-col" />
+            <col class="market-col" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Symbol</th>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Price (USD)</th>
+              <th>24h %</th>
+              <th>7d %</th>
+              <th>30d %</th>
+              <th>1y %</th>
+              <th>Market Cap</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="../utils.js"></script>
+  <script src="../modal/modal.js"></script>
+  <script src="market.js"></script>
+</body>
+</html>
