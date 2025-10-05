@@ -1,0 +1,156 @@
+/* Frontend/auth/auth.css — styles only for the auth page */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* Theme (scoped to this page only) */
+:root{
+  --bg:#0f1624;
+  --panel:#121b2b;
+  --panel-2:#0b121f;
+  --border:#1f2a3b;
+  --text:#e6eefc;
+  --muted:#9fb3d1;
+  --accent:#2c89ff;
+  --accent2:#1db954;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--text);
+}
+
+/* Background with subtle gradients */
+.auth-bg{
+  min-height:100vh;
+  background:
+    radial-gradient(1200px 600px at -10% -20%, #14213d 0%, transparent 60%),
+    radial-gradient(800px 400px at 110% 10%, #1b2a4a 0%, transparent 60%),
+    var(--bg);
+}
+
+/* Center shell + glassy card */
+.auth-shell{min-height:100vh; display:grid; place-items:center; padding:6vh 16px}
+.auth-card{
+  width:min(920px,94vw);
+  background:rgba(18,27,43,.93);
+  backdrop-filter:blur(10px);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 12px 32px rgba(0,0,0,.35);
+}
+
+/* Header */
+.auth-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+.brand{font-weight:700; font-size:28px; letter-spacing:.4px}
+.muted{color:var(--muted); font-size:14px}
+
+/* Grid for Login / Signup panels */
+.auth-grid{display:grid; gap:22px; margin-top:16px}
+@media (min-width:900px){ .auth-grid{ grid-template-columns:1fr 1fr } }
+
+/* Panels */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+}
+.panel-title{margin:0 0 8px 0; font-size:18px; font-weight:700}
+
+/* Forms */
+.form label{display:block; margin:12px 0 8px 0; font-weight:600}
+.form input{
+  width:100%;
+  padding:12px 12px;
+  border-radius:10px;
+  border:1px solid #22314c;
+  background:var(--panel-2);
+  color:var(--text);
+  outline:none;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.form input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(44,137,255,.15)}
+
+/* Buttons */
+.btn{
+  background:var(--accent2);
+  color:#0b121f;
+  border:none;
+  border-radius:10px;
+  padding:10px 14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .06s ease, filter .15s ease;
+  margin-top:10px;
+}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:translateY(1px)}
+.btn.secondary{background:var(--accent); color:#fff}
+.btn.outline{background:transparent; border:1px solid var(--accent); color:var(--accent)}
+
+/* Feedback text */
+.msg{margin-top:8px; color:#9fc0ff; font-size:14px}
+
+/* Optional OAuth row (if added later) */
+.oauth-row{display:flex; gap:10px; margin-top:8px}
+
+/* Small helpers for the new toggle & hints */
+.auth-stack { display: grid; gap: 20px; }
+.switch-link { color: var(--accent); text-decoration: none; font-weight: 600; }
+.switch-link:hover { text-decoration: underline; }
+
+.hints { min-height: 18px; margin-top: 6px; }
+.hint { font-size: 13px; }
+.hint.ok { color: #2dd4bf; }
+.hint.error { color: #ff9cae; }
+
+/* Error lines under fields (hidden unless .show) */
+.field-msg{
+  display:none;
+  font-size:12px;
+  color:#ff9cae;
+  margin-top:6px;
+}
+.field-msg.show{ display:block; }
+
+/* Toggle link styling */
+.switch-link{ color:var(--accent); text-decoration:none; font-weight:600; }
+.switch-link:hover{ text-decoration:underline; }
+
+/* Button effects */
+.btn{
+  position:relative;
+  overflow:hidden;
+  transform:translateZ(0); /* enable GPU compositing */
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
+  transition:
+    transform .08s ease,
+    filter .15s ease,
+    box-shadow .15s ease;
+}
+.btn:hover{
+  filter:brightness(1.06);
+  box-shadow:0 10px 22px rgba(0,0,0,.35);
+  transform:translateY(-1px);
+}
+.btn:active{
+  transform:translateY(0) scale(0.98);
+}
+.btn::after{
+  content:"";
+  position:absolute; inset:0;
+  background:radial-gradient(120px 60px at var(--mx,120%) var(--my,120%), rgba(255,255,255,.18), transparent 60%);
+  opacity:0; transition:opacity .25s ease;
+}
+.btn:hover::after{ opacity:1; }
+
+/* optional: subtle focus ring */
+.btn:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(44,137,255,.28), 0 8px 18px rgba(0,0,0,.35);
+}
+
+

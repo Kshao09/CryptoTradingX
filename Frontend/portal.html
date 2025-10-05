@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CryptoTradingX • Portal</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="page">
+  <!-- Top bar -->
+  <header class="topbar">
+    <h1>CryptoTradingX</h1>
+    <nav class="topnav">
+      <button id="logoutBtn" class="btn outline">Logout</button>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <button data-view="markets" class="active">Markets</button>
+    <button data-view="trade">Trade</button>
+    <button data-view="orders">Orders</button>
+    <button data-view="portfolio">Portfolio</button>
+  </aside>
+
+  <!-- Main content -->
+  <main class="content">
+    <!-- Markets -->
+    <section id="view-markets" class="view active">
+      <div class="cards">
+        <div class="card">
+          <h3>BTC-USD</h3>
+          <div id="btcPrice">--</div>
+        </div>
+        <div class="card">
+          <h3>ETH-USD</h3>
+          <div id="ethPrice">--</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trade -->
+    <section id="view-trade" class="view">
+      <div class="trade-bar">
+        <div class="col-span-2">
+          <label>Symbol</label>
+          <select id="symbol">
+            <option>BTC-USD</option>
+            <option>ETH-USD</option>
+          </select>
+        </div>
+
+        <div class="col-span-1">
+          <label>Side</label>
+          <select id="side">
+            <option>BUY</option>
+            <option>SELL</option>
+          </select>
+        </div>
+
+        <div class="col-span-1">
+          <label>Type</label>
+          <select id="type">
+            <option>MARKET</option>
+            <option>LIMIT</option>
+          </select>
+        </div>
+
+        <div class="col-span-2" id="priceWrap" style="display:none">
+          <label>Limit price</label>
+          <input id="price" type="number" step="0.01" />
+        </div>
+
+        <div class="col-span-1">
+          <label>Quantity</label>
+          <input id="qty" type="number" step="0.0001" />
+        </div>
+
+        <div class="submit-wrap">
+          <button class="btn" id="submitOrderBtn">Submit order</button>
+        </div>
+      </div>
+
+      <p id="tradeMsg" class="msg section-pad"></p>
+
+      <!-- hidden form; app.js listens for its submit -->
+      <form id="orderForm" style="display:none"></form>
+    </section>
+
+    <!-- Orders -->
+    <section id="view-orders" class="view">
+      <table class="table" id="ordersTable">
+        <thead>
+          <tr>
+            <th>ID</th><th>Symbol</th><th>Side</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Portfolio -->
+    <section id="view-portfolio" class="view">
+      <table class="table" id="portfolioTable">
+        <thead>
+          <tr><th>Asset</th><th>Balance</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // trigger the existing #orderForm submit handler when the visible button is clicked
+    document.getElementById('submitOrderBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('orderForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    });
+  </script>
+</body>
+</html>

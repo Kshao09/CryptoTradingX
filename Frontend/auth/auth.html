@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CryptoTradingX • Sign in / Sign up</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body class="auth-bg">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-title">
+        <div class="brand">CryptoTradingX</div>
+        <a id="modeLink" class="switch-link" href="#">Already registered? Sign in →</a>
+      </div>
+
+      <div class="auth-stack">
+        <!-- SIGN UP (default) -->
+        <section id="signupPanel" class="panel">
+          <h2 class="panel-title">Create account</h2>
+          <form id="signupForm" class="form" novalidate>
+            <label>Email
+              <input id="suEmail" type="email" placeholder="you@email.com" autocomplete="username" />
+            </label>
+            <div id="suEmailErr" class="field-msg"></div>
+
+            <label>Password
+              <input id="suPass" type="password" placeholder="Choose a strong password" autocomplete="new-password" />
+            </label>
+            <div id="suPassErr" class="field-msg"></div>
+
+            <label>Confirm password
+              <input id="suPass2" type="password" placeholder="Re-enter your password" autocomplete="new-password" />
+            </label>
+            <div id="suConfirmErr" class="field-msg"></div>
+
+            <button id="suBtn" type="submit" class="btn secondary" disabled>Create account</button>
+          </form>
+          <p id="suMsg" class="msg"></p>
+        </section>
+
+        <!-- LOGIN -->
+        <section id="loginPanel" class="panel" hidden>
+          <h2 class="panel-title">Login</h2>
+          <form id="loginForm" class="form" novalidate>
+            <label>Email
+              <input id="liEmail" type="email" placeholder="you@email.com" autocomplete="username" />
+            </label>
+            <div id="liEmailErr" class="field-msg"></div>
+
+            <label>Password
+              <input id="liPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+            </label>
+            <div id="liPassErr" class="field-msg"></div>
+
+            <button type="submit" class="btn">Login</button>
+          </form>
+          <p id="liMsg" class="msg"></p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

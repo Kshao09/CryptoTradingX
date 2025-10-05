@@ -1,0 +1,14 @@
+{
+  "name": "cryptotradingx",
+  "private": true,
+  "scripts": {
+    "api": "npm start --prefix Backend",
+    "api:dev": "npm run dev --prefix Backend",
+    "web": "http-server Frontend -p 8080 -c-1",
+    "dev": "concurrently -k -n API,WEB -c green,cyan \"npm:api:dev\" \"npm:web\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "http-server": "^14.1.1"
+  }
+}
