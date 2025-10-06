@@ -5,7 +5,7 @@ Front-end **HTML/CSS/JS**, back-end **Node/Express**, DB **MySQL or SQL Server**
 ## Stack
 - Frontend: HTML, CSS, JavaScript (vanilla)
 - Backend: Node.js + Express (REST + WS)
-- DB: MySQL _or_ SQL Server
+- DB: MySQL 
 - Auth: JWT + bcrypt
 - Orders: Market / Limit (simulated fill)
 
