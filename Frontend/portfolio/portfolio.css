@@ -1,2 +1,9 @@
 /* Portfolio page minimal overrides */
 .portfolio-wrap{ max-width:980px }
+.portfolio-top.layout-row{ display:flex; gap:20px; align-items:flex-start }
+.account-card{ min-width:260px }
+.account-balance{ margin-top:8px }
+.account-summary{ margin-top:6px; color:var(--muted); font-size:13px }
+.portfolio-main{ flex:1 }
+.transactions-area{ margin-top:18px }
+.transactions-card{ padding:8px; margin-top:8px }

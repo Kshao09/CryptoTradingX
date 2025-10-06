@@ -22,9 +22,26 @@
   </header>
   <main class="content">
     <div class="section-pad">
-      <div class="portfolio-wrap">
-        <div class="portfolio-chart"><canvas id="portfolioChart"></canvas></div>
-        <div id="portfolioLegend" class="portfolio-legend"></div>
+      <div class="portfolio-top layout-row">
+        <div class="card" id="accountCard" class="account-card">
+          <h3>Account</h3>
+          <div id="accountName" class="muted"></div>
+          <div id="accountEmail" class="muted"></div>
+          <div class="account-balance"><strong>Balance (USD)</strong>: <span id="accountBalance">--</span></div>
+          <div class="account-summary">Income: <span id="accIncome">--</span> &nbsp; Expenses: <span id="accExpenses">--</span></div>
+        </div>
+        <div class="portfolio-main">
+          <div class="portfolio-wrap">
+            <div class="portfolio-chart"><canvas id="portfolioChart"></canvas></div>
+            <div id="portfolioLegend" class="portfolio-legend"></div>
+          </div>
+        </div>
+      </div>
+      <div class="transactions-area">
+        <h3>Recent Transactions</h3>
+        <div class="card transactions-card">
+          <table class="table table-portfolio" id="transactionsTable"><thead><tr><th>Time</th><th>Symbol</th><th>Qty</th><th>Price</th><th>Value (USD)</th></tr></thead><tbody></tbody></table>
+        </div>
       </div>
     </div>
   </main>

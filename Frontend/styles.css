@@ -108,6 +108,7 @@ input:focus,select:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(4
   background:transparent; border:0; color:var(--muted);
   padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
 }
+.tabs .tab, .tabs .tab:link, .tabs .tab:visited { text-decoration: none; }
 .tabs .tab:hover{ color:var(--accent); background:rgba(34,211,238,.04) }
 .tabs .tab.active{
   color:var(--text); background:linear-gradient(180deg, #0f2732, #092029);

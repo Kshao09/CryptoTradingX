@@ -73,6 +73,31 @@ app.get('/api/portfolio', auth, async (req, res) => {
   res.json(rows);
 });
 
+// Account info
+app.get('/api/account', auth, async (req, res) => {
+  const rows = await query('SELECT id,email,created_at FROM users WHERE id=?', [req.user.id]);
+  if (!rows.length) return res.status(404).json({ message: 'user not found' });
+  res.json(rows[0]);
+});
+
+// Transactions (trades)
+app.get('/api/transactions', auth, async (req, res) => {
+  const rows = await query('SELECT id, order_id, symbol, price, qty, created_at, user_id FROM trades WHERE user_id=? ORDER BY created_at DESC LIMIT 200', [req.user.id]);
+  res.json(rows);
+});
+
+// Account summary: wallets + income/expenses computed from trades
+app.get('/api/account/summary', auth, async (req, res) => {
+  const wallets = await query('SELECT a.symbol AS asset, w.balance FROM wallets w JOIN assets a ON a.id=w.asset_id WHERE w.user_id=?', [req.user.id]);
+  const sums = await query("SELECT side, SUM(price*qty) AS total FROM trades WHERE user_id=? GROUP BY side", [req.user.id]);
+  const summary = { wallets, income:0, expenses:0 };
+  for (const s of sums) {
+    if (s.side === 'SELL') summary.income = Number(s.total || 0);
+    if (s.side === 'BUY') summary.expenses = Number(s.total || 0);
+  }
+  res.json(summary);
+});
+
 app.post('/api/orders', auth, async (req, res) => {
   const { symbol, side, type, qty, price } = req.body || {};
   if (!symbol || !side || !type || !qty) return res.status(400).json({ message: 'missing fields' });
