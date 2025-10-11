@@ -1,6 +1,5 @@
 /* Portfolio page minimal overrides */
-.portfolio-wrap{ max-width:980px }
-.portfolio-top.layout-row{ display:flex; gap:20px; align-items:flex-start }
+.portfolio-wrap{ max-width:980px }.portfolio-top.layout-row{ display:flex; gap:20px; align-items:flex-start }
 .account-card{ min-width:260px }
 .account-balance{ margin-top:8px }
 .account-summary{ margin-top:6px; color:var(--muted); font-size:13px }

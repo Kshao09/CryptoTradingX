@@ -38,15 +38,87 @@
   function setStatus(msg){ /* no-op to avoid on-page status and console logs */ }
   setStatus('Initializing...');
 
+  // UI state for filters & sorting
+  const state = { filterText: '', filter24: 'all', filterMcap: 'all', sortKey: null, sortDir: 'asc' };
+  const VIEW_STATE_KEY = 'markets_view_state_v1';
+
+  function saveViewState(){
+    try{
+      const payload = {
+        filter24: state.filter24,
+        filterMcap: state.filterMcap,
+        sortKey: state.sortKey,
+        sortDir: state.sortDir,
+        filterText: (document.getElementById('marketSearch')?.value) || state.filterText || ''
+      };
+      localStorage.setItem(VIEW_STATE_KEY, JSON.stringify(payload));
+    }catch(e){ /* ignore storage errors */ }
+  }
+
+  function loadViewState(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(VIEW_STATE_KEY) || '{}');
+      if (!saved) return;
+      if (saved.filter24) state.filter24 = saved.filter24;
+      if (saved.filterMcap) state.filterMcap = saved.filterMcap;
+      if (saved.sortKey) state.sortKey = saved.sortKey;
+      if (saved.sortDir) state.sortDir = saved.sortDir;
+      if (typeof saved.filterText === 'string') state.filterText = saved.filterText;
+      // apply to DOM elements if present
+      const ms = document.getElementById('marketSearch'); if (ms) ms.value = state.filterText || '';
+      const f24 = document.getElementById('filter24'); if (f24 && state.filter24) f24.value = state.filter24;
+      const fM = document.getElementById('filterMcap'); if (fM && state.filterMcap) fM.value = state.filterMcap;
+      updateSortIndicators();
+    }catch(e){ /* ignore parse errors */ }
+  }
+
+  function applySort(arr){
+    const key = state.sortKey; if (!key) return arr;
+    const dir = state.sortDir === 'asc' ? 1 : -1;
+    return arr.slice().sort((a,b)=>{
+      const va = a[key]; const vb = b[key];
+      if (va == null && vb == null) return 0; if (va == null) return 1*dir; if (vb == null) return -1*dir;
+      if (typeof va === 'string' && typeof vb === 'string') return va.localeCompare(vb) * dir;
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+      // fallback
+      return String(va).localeCompare(String(vb)) * dir;
+    });
+  }
+
+  function passesFilters(m){
+    // 24h filter
+    if (state.filter24 === 'up' && !(typeof m.change24h === 'number' && m.change24h > 0)) return false;
+    if (state.filter24 === 'down' && !(typeof m.change24h === 'number' && m.change24h < 0)) return false;
+    // market cap filter (numeric threshold)
+    if (state.filterMcap !== 'all'){
+      const threshold = Number(state.filterMcap) || 0; if (!(typeof m.marketCap === 'number' && m.marketCap > threshold)) return false;
+    }
+    return true;
+  }
+
+  function updateSortIndicators(){
+    document.querySelectorAll('#marketsTable th.sortable').forEach(th=>{
+      th.classList.remove('sort-asc','sort-desc');
+      if (th.dataset.key === state.sortKey) th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    });
+  }
+
   function renderMarkets(filter=''){
     const tbody = document.querySelector('#marketsTable tbody'); if (!tbody) return;
     tbody.innerHTML = '';
     const q = normalize(filter);
-    const source = (currentMarkets && currentMarkets.length) ? currentMarkets : MARKETS.map(([s,n])=>({ symbol:s, name:n }));
+    let source = (currentMarkets && currentMarkets.length) ? currentMarkets : MARKETS.map(([s,n])=>({ symbol:s, name:n }));
+    // update state filter text
+    state.filterText = q;
+    source = source.filter(m => {
+      if (q){ const symNorm = normalize(m.symbol||''); const nameNorm = normalize(m.name||''); if (!(symNorm.includes(q) || nameNorm.includes(q))) return false; }
+      return passesFilters(m);
+    });
+    // apply sorting
+    source = applySort(source);
     source.forEach(m => {
       const sym = m.symbol; const name = m.name||'';
       const symNorm = normalize(sym); const nameNorm = normalize(name);
-      if (q && !(symNorm.includes(q) || nameNorm.includes(q))) return;
       const tr = document.createElement('tr'); tr.dataset.symbol = sym;
       tr.innerHTML = `
         <td class="col-logo"><img src="${m.image||''}" alt="" width="20" height="20" onerror="this.style.display='none'"/></td>
@@ -85,6 +157,7 @@
       });
       tbody.appendChild(tr);
     });
+    updateSortIndicators();
   }
 
   async function loadMarkets(){
@@ -121,10 +194,30 @@
     try{ const rendered = document.querySelectorAll('#marketsTable tbody tr').length; setStatus((document.getElementById('marketStatus')?.textContent||'') + ` — displayed ${rendered} rows`); }catch(e){}
   }
 
-  document.getElementById('marketSearch')?.addEventListener('input', (e)=>renderMarkets(e.target.value));
+  document.getElementById('marketSearch')?.addEventListener('input', (e)=>{ renderMarkets(e.target.value); saveViewState(); });
+
+  // wire filters
+  const f24 = document.getElementById('filter24');
+  const fM = document.getElementById('filterMcap');
+  const clearBtn = document.getElementById('clearFilters');
+  if (f24){ f24.addEventListener('change', (e)=>{ state.filter24 = e.target.value; renderMarkets(document.getElementById('marketSearch')?.value||''); saveViewState(); }); }
+  if (fM){ fM.addEventListener('change', (e)=>{ state.filterMcap = e.target.value; renderMarkets(document.getElementById('marketSearch')?.value||''); saveViewState(); }); }
+  if (clearBtn){ clearBtn.addEventListener('click', ()=>{ if (f24) f24.value='all'; if (fM) fM.value='all'; document.getElementById('marketSearch').value=''; state.filter24='all'; state.filterMcap='all'; state.sortKey=null; state.sortDir='asc'; renderMarkets(''); updateSortIndicators(); saveViewState(); }); }
+
+  // wire header sorting
+  document.querySelectorAll('#marketsTable th.sortable').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      if (state.sortKey === key) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sortKey = key; state.sortDir = 'asc'; }
+      renderMarkets(document.getElementById('marketSearch')?.value||'');
+      saveViewState();
+    });
+  });
 
   document.getElementById('logoutBtn')?.addEventListener('click', ()=>{ localStorage.removeItem('token'); location.replace('../auth/auth.html'); });
 
+  // restore any saved filter/sort/search state
+  loadViewState();
   renderMarkets();
   await loadMarkets();
   setInterval(loadMarkets, 30000);

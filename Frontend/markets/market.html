@@ -26,34 +26,50 @@
     <section class="section-pad">
       <div class="search-wrap">
         <input id="marketSearch" type="search" placeholder="Search by name or symbol (e.g. Bitcoin, BTC)" />
+        <div class="market-controls">
+          <label for="filter24">24h:</label>
+          <select id="filter24">
+            <option value="all">All</option>
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+          </select>
+          <label for="filterMcap">Market Cap:</label>
+          <select id="filterMcap">
+            <option value="all">All</option>
+            <option value=1000000000>&gt; $1B</option>
+            <option value=100000000>&gt; $100M</option>
+            <option value=10000000>&gt; $10M</option>
+          </select>
+          <button id="clearFilters" title="Clear filters">Clear</button>
+        </div>
       </div>
         <div id="marketStatus" class="section-pad" aria-live="polite"></div>
       <div class="table-wrap">
         <table class="table table-markets" id="marketsTable">
           <colgroup>
-            <col class="market-col" /> <!-- logo -->
-            <col class="market-col" /> <!-- symbol -->
-            <col class="market-col" /> <!-- rank -->
-            <col class="market-col" />
-            <col class="market-col" />
-            <col class="market-col" />
-            <col class="market-col" />
-            <col class="market-col" />
-            <col class="market-col" />
-            <col class="market-col" />
+            <col class="col-logo" /> <!-- logo -->
+            <col class="col-symbol" /> <!-- symbol -->
+            <col class="col-rank" /> <!-- rank -->
+            <col class="col-name" />
+            <col class="col-price" />
+            <col class="col-change24" />
+            <col class="col-change7" />
+            <col class="col-change30" />
+            <col class="col-change1y" />
+            <col class="col-mcap" />
           </colgroup>
           <thead>
             <tr>
               <th></th>
-              <th>Symbol</th>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>Price (USD)</th>
-              <th>24h %</th>
-              <th>7d %</th>
-              <th>30d %</th>
-              <th>1y %</th>
-              <th>Market Cap</th>
+              <th class="sortable" data-key="symbol">Symbol</th>
+              <th class="sortable" data-key="rank">Rank</th>
+              <th class="sortable" data-key="name">Name</th>
+              <th class="sortable" data-key="price">Price (USD)</th>
+              <th class="sortable" data-key="change24h">24h %</th>
+              <th class="sortable" data-key="change7d">7d %</th>
+              <th class="sortable" data-key="change30d">30d %</th>
+              <th class="sortable" data-key="change1y">1y %</th>
+              <th class="sortable" data-key="marketCap">Market Cap</th>
             </tr>
           </thead>
           <tbody></tbody>

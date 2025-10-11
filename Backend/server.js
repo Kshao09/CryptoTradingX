@@ -89,7 +89,11 @@ app.get('/api/transactions', auth, async (req, res) => {
 // Account summary: wallets + income/expenses computed from trades
 app.get('/api/account/summary', auth, async (req, res) => {
   const wallets = await query('SELECT a.symbol AS asset, w.balance FROM wallets w JOIN assets a ON a.id=w.asset_id WHERE w.user_id=?', [req.user.id]);
-  const sums = await query("SELECT side, SUM(price*qty) AS total FROM trades WHERE user_id=? GROUP BY side", [req.user.id]);
+  // trades table doesn't store the order side; join to orders to get it
+  const sums = await query(
+    'SELECT o.side, SUM(t.price*t.qty) AS total FROM trades t JOIN orders o ON t.order_id = o.id WHERE t.user_id=? GROUP BY o.side',
+    [req.user.id]
+  );
   const summary = { wallets, income:0, expenses:0 };
   for (const s of sums) {
     if (s.side === 'SELL') summary.income = Number(s.total || 0);

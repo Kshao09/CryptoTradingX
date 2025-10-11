@@ -155,7 +155,9 @@ $('#loginForm').addEventListener('submit', async (e) => {
   liSubmitted = true;
   if (!validateLogin({ forceShow: true })) return;
 
-  liMsg.textContent = 'Signing in...';
+  // Do not show a transient "Signing in..." message when the user clicks login.
+  // Keep the message area empty unless there's an error to display.
+  liMsg.textContent = '';
   try {
     const data = await postJSON('/api/auth/login', { email: liEmail.value.trim(), password: liPass.value });
   localStorage.setItem('token', data.token);
