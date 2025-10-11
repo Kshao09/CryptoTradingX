@@ -20,46 +20,47 @@
     </div>
     <button id="logoutBtn">Logout</button>
   </header>
+
   <main class="content">
-    <section class="trade-bar">
-      <div class="col-span-2">
-        <label>Symbol</label>
-        <select id="symbol"></select>
-      </div>
-      <div class="col-span-1">
-        <label>Side</label>
-        <select id="side"><option>BUY</option><option>SELL</option></select>
-      </div>
-      <div class="col-span-1">
-        <label>Type</label>
-        <select id="type"><option>MARKET</option><option>LIMIT</option></select>
-      </div>
-      <div class="col-span-2 hidden" id="priceWrap">
-        <label>Limit price</label>
-        <input id="price" type="number" step="0.01" />
-      </div>
-      <div class="col-span-1">
-        <label>Amount</label>
-        <input id="qty" type="number" inputmode="decimal" min="0" step="0.00000001" placeholder="0.01" />
-      </div>
-      <div class="submit-wrap">
-        <button class="btn" id="submitOrderBtn">Submit order</button>
-      </div>
+    <!-- Purchase with card (Stripe) -->
+    <section class="card purchase-card">
+      <h3>Purchase crypto with card</h3>
+      <form id="purchaseForm">
+        <div class="purchase-row">
+          <div>
+            <label for="purchaseCoin">Coin</label>
+            <select id="purchaseCoin" class="select"></select>
+          </div>
+          <div>
+            <label for="amountUsd">Amount (USD)</label>
+            <input id="amountUsd" class="input" type="number" min="1" step="1" placeholder="50" required />
+          </div>
+          <div class="full">
+            <label for="buyerName">Cardholder name</label>
+            <input id="buyerName" class="input" type="text" autocomplete="name" placeholder="Full name on card" required />
+          </div>
+          <div class="full">
+            <label for="buyerEmail">Email (receipt)</label>
+            <input id="buyerEmail" class="input" type="email" autocomplete="email" placeholder="you@example.com" required />
+          </div>
+          <div class="full">
+            <label>Card details</label>
+            <div id="card-element"></div>
+            <div id="card-errors" role="alert"></div>
+          </div>
+        </div>
+        <div class="submit-wrap">
+          <button class="btn pay" id="payBtn" type="submit">Pay with card</button>
+        </div>
+        <p class="acceptance">We accept Visa, Mastercard, and American Express. Your payment is processed securely by Stripe.</p>
+        <p id="purchaseMsg" class="msg"></p>
+      </form>
     </section>
-    <div class="exchange-row">
-      <div class="card exchange-card">
-        <h3 class="exchange-title">Exchange</h3>
-        <input id="rateQty" class="exchange-qty" type="number" inputmode="decimal" min="0" step="0.00000001" value="1" />
-        <select id="rateCoin" class="exchange-coin"></select>
-        <div class="exchange-result">= <strong id="rateResult">--</strong> USD</div>
-      </div>
-    </div>
-    <p id="tradeMsg" class="msg section-pad"></p>
-    <form id="orderForm"></form>
   </main>
 
   <script src="../config.js"></script>
   <script src="../utils.js"></script>
+  <script src="https://js.stripe.com/v3"></script>
   <script src="trade.js"></script>
 </body>
 </html>

@@ -153,4 +153,14 @@ body{
   box-shadow:0 0 0 3px rgba(44,137,255,.28), 0 8px 18px rgba(0,0,0,.35);
 }
 
+/* Grid for first/middle/last name */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .grid-3 { grid-template-columns: 1fr; }
+}
+
 

@@ -20,23 +20,85 @@
     </div>
     <button id="logoutBtn">Logout</button>
   </header>
+
   <main class="content">
-    <section class="section-pad">
-      <table class="table table-orders" id="ordersTable">
-        <colgroup>
-          <col class="col-id" />
-          <col class="col-symbol" />
-          <col class="col-side" />
-          <col class="col-type" />
-          <col class="col-qty" />
-          <col class="col-price" />
-          <col class="col-status" />
-        </colgroup>
-        <thead><tr><th>ID</th><th>Symbol</th><th>Side</th><th>Type</th><th>Qty</th><th>Price</th><th>Status</th></tr></thead>
-        <tbody></tbody>
-      </table>
+    <section class="card orders-card">
+      <div class="orders-header">
+        <h3>Your Orders</h3>
+
+        <!-- Filters -->
+        <div class="filters">
+          <div class="f">
+            <label for="fSymbol">Symbol</label>
+            <select id="fSymbol" class="select"><option value="">All</option></select>
+          </div>
+          <div class="f">
+            <label for="fSide">Side</label>
+            <select id="fSide" class="select">
+              <option value="">All</option>
+              <option>BUY</option>
+              <option>SELL</option>
+            </select>
+          </div>
+          <div class="f">
+            <label for="fType">Type</label>
+            <select id="fType" class="select">
+              <option value="">All</option>
+              <option>MARKET</option>
+              <option>LIMIT</option>
+            </select>
+          </div>
+          <div class="f">
+            <label for="fStatus">Status</label>
+            <select id="fStatus" class="select">
+              <option value="">All</option>
+              <option>NEW</option>
+              <option>FILLED</option>
+              <option>PARTIAL</option>
+              <option>CANCELED</option>
+            </select>
+          </div>
+          <div class="f grow">
+            <label for="fSearch">Search</label>
+            <input id="fSearch" class="input" placeholder="ID / Symbol…" />
+          </div>
+          <div class="f buttons">
+            <button class="btn subtle" id="btnReset">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable table wrapper -->
+      <div class="table-scroll">
+        <table id="ordersTable" class="table">
+          <colgroup>
+            <col class="col-id" />
+            <col class="col-symbol" />
+            <col class="col-side" />
+            <col class="col-type" />
+            <col class="col-qty" />
+            <col class="col-price" />
+            <col class="col-status" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Symbol</th>
+              <th>Side</th>
+              <th>Type</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p id="ordersMsg" class="msg"></p>
     </section>
   </main>
+
   <script src="../config.js"></script>
   <script src="../utils.js"></script>
   <script src="orders.js"></script>

@@ -1,38 +1,63 @@
-// Shared small helpers used across frontend pages
-(function(window){
-  window.$ = (s) => document.querySelector(s);
-  window.$$ = (s) => Array.from(document.querySelectorAll(s));
-  window.normalize = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g,'');
+/* utils.js — small helpers used across pages */
 
-  window.shortNumber = function(n){
-    if (n === null || n === undefined || Number.isNaN(n)) return '--';
-    const abs = Math.abs(n);
-    if (abs >= 1e12) return (n / 1e12).toFixed(2) + 'T';
-    if (abs >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-    if (abs >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-    if (abs >= 1e3) return (n / 1e3).toFixed(2) + 'K';
-    return Number(n).toLocaleString();
-  };
+(function () {
+  const CFG = (window.CONFIG || {});
 
-  window.fmtPrice = function(v){ return (v === null || v === undefined) ? '--' : Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
-  window.fmtPct = function(v){ return (v === null || v === undefined) ? '--' : (v >= 0 ? '+' : '') + Number(v).toFixed(2) + '%'; };
+  function getToken() {
+    try { return localStorage.getItem("token") || ""; } catch { return ""; }
+  }
 
-  window.ensureChartJsLoaded = async function(){
-    if (window.Chart) return;
-    await new Promise((res, rej) => {
-      const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/chart.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s);
-    });
-  };
+  function setToken(t) {
+    try {
+      if (t) localStorage.setItem("token", t);
+      else localStorage.removeItem("token");
+    } catch {}
+  }
 
-  // Authorized fetch helper used across pages (uses CTX and token in localStorage)
-  window.authed = async function(path, init = {}){
-    const token = localStorage.getItem('token');
-    if (!token) { window.location.replace('../auth/auth.html'); return; }
-    const headers = Object.assign({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, init.headers || {});
-    const r = await fetch(`${window.CTX.API}${path}`, Object.assign({}, init, { headers }));
-    if (r.status === 401) { localStorage.removeItem('token'); window.location.replace('../auth/auth.html'); return; }
-    const data = await r.json().catch(()=>({}));
-    if (!r.ok) throw new Error(data.message || 'Request failed');
-    return data;
-  };
-})(window);
+  async function api(path, opts = {}) {
+    const url = (CFG.API_BASE || "") + path;
+    const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+    const res = await fetch(url, Object.assign({}, opts, { headers }));
+    if (!res.ok) {
+      // Try to extract a clear error
+      let msg = res.statusText;
+      try {
+        const data = await res.json();
+        msg = data.message || data.error || msg;
+      } catch {
+        try { msg = await res.text(); } catch {}
+      }
+      throw new Error(msg || `HTTP ${res.status}`);
+    }
+    // No content
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  async function authed(path, opts = {}) {
+    const token = getToken();
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      opts.headers || {},
+      token ? { Authorization: `Bearer ${token}` } : {}
+    );
+    try {
+      return await api(path, Object.assign({}, opts, { headers }));
+    } catch (e) {
+      const msg = (e && e.message) ? e.message : String(e);
+      if (/unauthorized|no token|invalid token|401/i.test(msg)) {
+        // Back to login if auth fails
+        try { localStorage.removeItem("token"); } catch {}
+        // Adjust this path to your auth page if different
+        window.location.replace("../auth/auth.html");
+      }
+      throw e;
+    }
+  }
+
+  // expose helpers
+  window.getToken = getToken;
+  window.setToken = setToken;
+  window.api = api;
+  window.authed = authed;
+})();

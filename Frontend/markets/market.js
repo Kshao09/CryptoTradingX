@@ -13,6 +13,48 @@
     ['SAND-USD','The Sandbox'], ['AAVE-USD','Aave'], ['WAVES-USD','Waves'], ['BTT-USD','BitTorrent']
   ];
 
+  // Text normalizer for search/filtering
+  function normalize(str){
+    try{
+      return String(str || '')
+        .normalize('NFKD')                 // split accents
+        .replace(/[\u0300-\u036f]/g,'')  // remove diacritics
+        .toLowerCase()
+        .replace(/[^a-z0-9.+-]+/g,' ')     // keep word chars and + . -
+        .trim();
+    }catch(_){
+      return (str || '').toString().toLowerCase().trim();
+    }
+  }
+
+  // Formatting helpers
+  function fmtPrice(v){
+    const n = Number(v);
+    if (!isFinite(n)) return '--';
+    const abs = Math.abs(n);
+    // pick sensible precision
+    let max = 2;
+    if (abs < 1) max = 4;
+    if (abs < 0.01) max = 8;
+    return '$' + n.toLocaleString(undefined, { maximumFractionDigits: max });
+  }
+  function fmtPct(v){
+    const n = Number(v);
+    if (!isFinite(n)) return '--';
+    const sign = n > 0 ? '+' : '';
+    return sign + n.toFixed(2) + '%';
+  }
+  function shortNumber(v){
+    const n = Number(v);
+    if (!isFinite(n)) return '--';
+    const abs = Math.abs(n);
+    if (abs >= 1e12) return (n/1e12).toFixed(2) + 'T';
+    if (abs >= 1e9)  return (n/1e9 ).toFixed(2) + 'B';
+    if (abs >= 1e6)  return (n/1e6 ).toFixed(2) + 'M';
+    if (abs >= 1e3)  return (n/1e3 ).toFixed(2) + 'K';
+    return n.toLocaleString();
+  }
+
   // CoinGecko id mapping for our symbols (used to build the API query)
   const COINGECKO_MAP = {
     'BTC-USD':'bitcoin','ETH-USD':'ethereum','USDT-USD':'tether','USDC-USD':'usd-coin',

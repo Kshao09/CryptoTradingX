@@ -2,51 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Portfolio • CryptoTradingX</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="../shared/reset.css" />
   <link rel="stylesheet" href="portfolio.css" />
+  <link rel="icon" href="../shared/favicon.png" />
 </head>
-<body class="page">
+<body>
+  <!-- Top nav -->
   <header class="topbar">
-    <div class="header-left">
-      <h1 class="brand">CryptoTradingX</h1>
-      <nav class="tabs">
-        <a href="../markets/market.html" class="tab">Markets</a>
-        <a href="../trade/trade.html" class="tab">Trade</a>
-        <a href="../orders/orders.html" class="tab">Orders</a>
-        <a href="portfolio.html" class="tab active">Portfolio</a>
-      </nav>
-    </div>
-    <button id="logoutBtn">Logout</button>
+    <div class="brand">CryptoTradingX</div>
+    <nav class="nav">
+      <a href="../markets/market.html">Markets</a>
+      <a href="../trade/trade.html">Trade</a>
+      <a href="../orders/orders.html">Orders</a>
+      <a class="active" href="./portfolio.html">Portfolio</a>
+    </nav>
+    <button id="logoutBtn" class="btn btn-outline">Logout</button>
   </header>
-  <main class="content">
-    <div class="section-pad">
-      <div class="portfolio-top layout-row">
-        <div class="card" id="accountCard" class="account-card">
-          <h3>Account</h3>
-          <div id="accountName" class="muted"></div>
-          <div id="accountEmail" class="muted"></div>
-          <div class="account-balance"><strong>Balance (USD)</strong>: <span id="accountBalance">--</span></div>
-          <div class="account-summary">Income: <span id="accIncome">--</span> &nbsp; Expenses: <span id="accExpenses">--</span></div>
-        </div>
-        <div class="portfolio-main">
-          <div class="portfolio-wrap">
-            <div class="portfolio-chart"><canvas id="portfolioChart"></canvas></div>
-            <div id="portfolioLegend" class="portfolio-legend"></div>
-          </div>
-        </div>
+
+  <main class="page">
+    <!-- Account card -->
+    <section class="section-account">
+      <div class="account-card" id="accountCard">
+        <h2>Account</h2>
+
+        <!-- Name replaces email (fallback to email if name missing) -->
+        <p id="acctName" class="acct-name">—</p>
+
+        <p class="muted">
+          Member since: <span id="acctSince">—</span>
+        </p>
+
+        <h3 class="mt-12">
+          Balance (USD): <span id="balanceUSD">—</span>
+        </h3>
+
+        <p class="muted mt-6">
+          Income: <span id="incomeUSD">$0</span>
+          <span class="spacer"></span>
+          Expenses: <span id="expensesUSD">$0</span>
+        </p>
       </div>
-      <div class="transactions-area">
-        <h3>Recent Transactions</h3>
-        <div class="card transactions-card">
-          <table class="table table-portfolio" id="transactionsTable"><thead><tr><th>Time</th><th>Symbol</th><th>Qty</th><th>Price</th><th>Value (USD)</th></tr></thead><tbody></tbody></table>
-        </div>
+
+      <!-- Portfolio donut -->
+      <div class="chart-wrap">
+        <canvas id="portfolioChart" width="420" height="420"></canvas>
+        <div id="chartLegend" class="chart-legend"></div>
       </div>
-    </div>
+    </section>
+
+    <!-- Transactions table -->
+    <section class="section-transactions">
+      <h2>Recent Transactions</h2>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Symbol</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Value (USD)</th>
+            </tr>
+          </thead>
+          <tbody id="txTableBody">
+            <!-- rows injected -->
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
-  <script src="../config.js"></script>
-  <script src="../utils.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="portfolio.js"></script>
 </body>
 </html>

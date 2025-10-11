@@ -19,6 +19,31 @@
         <section id="signupPanel" class="panel">
           <h2 class="panel-title">Create account</h2>
           <form id="signupForm" class="form" novalidate>
+
+            <!-- New: name inputs -->
+            <div class="grid-3">
+              <div>
+                <label>First name
+                  <input id="suFirst" type="text" placeholder="Jane" autocomplete="given-name" />
+                </label>
+                <div id="suFirstErr" class="field-msg"></div>
+              </div>
+
+              <div>
+                <label>Middle name <span class="muted">(optional)</span>
+                  <input id="suMiddle" type="text" placeholder="A." autocomplete="additional-name" />
+                </label>
+                <div id="suMiddleErr" class="field-msg"></div>
+              </div>
+
+              <div>
+                <label>Last name
+                  <input id="suLast" type="text" placeholder="Doe" autocomplete="family-name" />
+                </label>
+                <div id="suLastErr" class="field-msg"></div>
+              </div>
+            </div>
+
             <label>Email
               <input id="suEmail" type="email" placeholder="you@email.com" autocomplete="username" />
             </label>

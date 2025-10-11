@@ -1,2 +1,77 @@
-/* Orders page specific styles (minimal) */
-.table-orders{ max-width:100%; }
+/* Orders page */
+.orders-card {
+  max-width: 1200px;
+  /* moved up slightly so more of the table is visible */
+  margin: 12px auto 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Filters — single row with Reset at the end */
+.filters {
+  display: grid;
+  /* 6 filter columns + 1 auto column for the Reset button */
+  grid-template-columns: repeat(6, minmax(140px, 1fr)) auto;
+  gap: 12px;
+  margin-top: 4px;
+  align-items: end;       /* align inputs + button bottom edge */
+}
+.filters .f { display: flex; flex-direction: column; gap: 6px; }
+.filters .f.grow { grid-column: span 2; }  /* Search takes 2 cols on wide screens */
+.filters .f.buttons { justify-self: end; } /* Push Reset to the far right */
+.filters .btn.subtle { padding: 10px 14px; }
+
+/* Responsive: allow wrapping on smaller widths */
+@media (max-width: 1100px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(140px, 1fr)) auto;
+  }
+  .filters .f.grow { grid-column: span 3; }
+}
+
+/* Scrollable table — a bit taller so the bottom is visible */
+.table-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 250px);
+  border-radius: 12px;
+  border: 1px solid #1d2a44;
+}
+
+/* Sticky header for better UX */
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  background: var(--panel-1, #0b1220);
+  z-index: 1;
+}
+
+/* Column widths (optional) */
+.col-id { width: 72px; }
+.col-symbol { width: 200px; }
+.col-side { width: 120px; }
+.col-type { width: 140px; }
+.col-qty { width: 140px; }
+.col-price { width: 160px; }
+.col-status { width: 160px; }
+
+/* Table basics (inherits your styles.css table design) */
+.table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+
+.table th, .table td { 
+    padding: 14px 16px; 
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.table tbody tr:hover {
+    background: rgba(255,255,255,0.02); 
+}
+
+/* Utilities */
+.hidden { 
+    display: none !important; 
+}

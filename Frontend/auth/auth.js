@@ -1,6 +1,12 @@
+// auth.js — robust toggle + signup/login with name fields
+
+const $ = (sel) => document.querySelector(sel);
+
 // If already logged in, go to markets page
-const tokenExisting = localStorage.getItem('token');
-if (tokenExisting) location.replace('../markets/market.html');
+try {
+  const tokenExisting = localStorage.getItem('token');
+  if (tokenExisting) location.replace('../markets/market.html');
+} catch {}
 
 /* ---------- Mode toggle ---------- */
 const panels = { signup: $('#signupPanel'), login: $('#loginPanel') };
@@ -12,113 +18,128 @@ let mode = (params.get('mode') === 'login') ? 'login' : 'signup';
 function setMode(next) {
   mode = next;
   const isLogin = mode === 'login';
-  panels.signup.hidden = isLogin;
-  panels.login.hidden  = !isLogin;
-  link.textContent = isLogin ? 'New here? Create account →' : 'Already registered? Sign in →';
-  // Clear transient messages/errors when switching
+  if (panels.signup) panels.signup.hidden = isLogin;
+  if (panels.login)  panels.login.hidden  = !isLogin;
+  if (link) link.textContent = isLogin ? 'New here? Create account →' : 'Already registered? Sign in →';
   hideAllErrors();
-  $('#suMsg').textContent = '';
-  $('#liMsg').textContent = '';
-  (isLogin ? $('#liEmail') : $('#suEmail'))?.focus();
+  $('#suMsg') && ($('#suMsg').textContent = '');
+  $('#liMsg') && ($('#liMsg').textContent = '');
+  (isLogin ? $('#liEmail') : $('#suFirst'))?.focus();
 }
-link.addEventListener('click', (e) => { e.preventDefault(); setMode(mode === 'login' ? 'signup' : 'login'); });
+if (link) link.addEventListener('click', (e) => { e.preventDefault(); setMode(mode === 'login' ? 'signup' : 'login'); });
 setMode(mode);
 
 /* ---------- Helpers ---------- */
-function postJSON(path, body) {
-  return fetch(`${CTX.API}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  }).then(async (r) => {
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.message || 'Request failed');
-    return data;
-  });
-}
+function postJSON(path, body) { return api(path, { method: 'POST', body: JSON.stringify(body) }); } // uses utils.js (:contentReference[oaicite:9]{index=9})
 
-function showErr(id, msg) {
-  const el = $(id);
+function showErr(sel, msg) {
+  const el = typeof sel === 'string' ? $(sel) : sel;
   if (!el) return;
   if (!msg) { el.textContent = ''; el.classList.remove('show'); return; }
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
 }
 function hideAllErrors() {
-  document.querySelectorAll('.field-msg').forEach((n) => { n.textContent = ''; n.classList.remove('show'); });
+  document.querySelectorAll('.field-msg').forEach(n => { n.textContent = ''; n.classList.remove('show'); });
+}
+
+// Name validation: allow letters, spaces, hyphens, apostrophes (Unicode friendly)
+function nameValid(value, { optional = false } = {}) {
+  const s = (value || '').trim();
+  if (!s) return optional; // ok if optional
+  return /^[\p{L}][\p{L}\p{M}'\- ]{1,99}$/u.test(s); // 2–100 chars total
 }
 
 /* ============================================================
-   SIGNUP: show errors ONLY after user makes a mistake (touched)
-   or on submit attempt. Hide them when fixed or untouched.
+   SIGNUP validation + submit
 ============================================================ */
-const suEmail = $('#suEmail');
-const suPass  = $('#suPass');
-const suPass2 = $('#suPass2');
-const suBtn   = $('#suBtn');
-const suMsg   = $('#suMsg');
+const suFirst  = $('#suFirst');
+const suMiddle = $('#suMiddle');
+const suLast   = $('#suLast');
+const suEmail  = $('#suEmail');
+const suPass   = $('#suPass');
+const suPass2  = $('#suPass2');
+const suBtn    = $('#suBtn');
+const suMsg    = $('#suMsg');
 
-let suTouched = { email: false, pass: false, confirm: false };
+let suTouched = { first:false, middle:false, last:false, email:false, pass:false, confirm:false };
 let suSubmitted = false;
 
-function emailValid(v) {
-  // Use built-in validation if available; fallback to simple pattern
-  return v && (suEmail.checkValidity ? suEmail.checkValidity() : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+function emailValidInput(inputEl) {
+  const v = inputEl?.value?.trim() || '';
+  return v && (inputEl.checkValidity ? inputEl.checkValidity() : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
 }
+
 function validateSignup({ forceShow = false } = {}) {
-  const email = suEmail.value.trim();
-  const p1 = suPass.value;
-  const p2 = suPass2.value;
+  const firstOk   = nameValid(suFirst?.value);
+  const middleOk  = nameValid(suMiddle?.value, { optional: true });
+  const lastOk    = nameValid(suLast?.value);
+  const emailOk   = emailValidInput(suEmail);
+  const passOk    = (suPass?.value || '').length >= 8 && /[0-9]/.test(suPass.value) && /[A-Za-z]/.test(suPass.value); // simple strength check
+  const confirmOk = (suPass2?.value || '').length > 0 && suPass?.value === suPass2?.value;
 
-  const emailOk = emailValid(email);
-  const passOk = p1.length >= 8;
-  const confirmOk = p2.length > 0 && p1 === p2;
+  const showFirstErr   = (suTouched.first   || suSubmitted || forceShow) && !firstOk  && (suFirst?.value  || '').length > 0;
+  const showMiddleErr  = (suTouched.middle  || suSubmitted || forceShow) && !middleOk && (suMiddle?.value || '').length > 0; // only if provided
+  const showLastErr    = (suTouched.last    || suSubmitted || forceShow) && !lastOk   && (suLast?.value   || '').length > 0;
+  const showEmailErr   = (suTouched.email   || suSubmitted || forceShow) && !emailOk  && (suEmail?.value  || '').length > 0;
+  const showPassErr    = (suTouched.pass    || suSubmitted || forceShow) && !passOk   && (suPass?.value   || '').length > 0;
+  const showConfirmErr = (suTouched.confirm || suSubmitted || forceShow) && !confirmOk && (suPass2?.value || '').length > 0;
 
-  const showEmailErr   = (suTouched.email || suSubmitted || forceShow) && !emailOk && email.length > 0;
-  const showPassErr    = (suTouched.pass  || suSubmitted || forceShow) && !passOk  && p1.length   > 0;
-  const showConfirmErr = (suTouched.confirm || suSubmitted || forceShow) && !confirmOk && p2.length > 0;
-
-  // Only show if actually a mistake; if empty or fixed -> hide
+  showErr('#suFirstErr',   showFirstErr   ? 'First name should be letters/spaces only (2–100 chars).' : '');
+  showErr('#suMiddleErr',  showMiddleErr  ? 'Middle name has invalid characters.' : '');
+  showErr('#suLastErr',    showLastErr    ? 'Last name should be letters/spaces only (2–100 chars).' : '');
   showErr('#suEmailErr',   showEmailErr   ? 'Enter a valid email.' : '');
-  showErr('#suPassErr',    showPassErr    ? 'Password must be at least 8 characters.' : '');
+  showErr('#suPassErr',    showPassErr    ? 'Min 8 chars, include letters & a number.' : '');
   showErr('#suConfirmErr', showConfirmErr ? 'Passwords do not match.' : '');
 
-  // Enable button only when all valid
-  suBtn.disabled = !(emailOk && passOk && confirmOk);
-  return emailOk && passOk && confirmOk;
+  if (suBtn) suBtn.disabled = !(firstOk && lastOk && emailOk && passOk && confirmOk && middleOk);
+  return firstOk && lastOk && emailOk && passOk && confirmOk && middleOk;
 }
 
-// blur marks as "touched"; input revalidates and hides when fixed/empty
-suEmail.addEventListener('blur',  () => { suTouched.email   = true; validateSignup(); });
-suPass.addEventListener('blur',   () => { suTouched.pass    = true; validateSignup(); });
-suPass2.addEventListener('blur',  () => { suTouched.confirm = true; validateSignup(); });
+// mark touched on blur; revalidate on input
+suFirst ?.addEventListener('blur',  () => { suTouched.first   = true; validateSignup(); });
+suMiddle?.addEventListener('blur',  () => { suTouched.middle  = true; validateSignup(); });
+suLast  ?.addEventListener('blur',  () => { suTouched.last    = true; validateSignup(); });
+suEmail ?.addEventListener('blur',  () => { suTouched.email   = true; validateSignup(); });
+suPass  ?.addEventListener('blur',  () => { suTouched.pass    = true; validateSignup(); });
+suPass2 ?.addEventListener('blur',  () => { suTouched.confirm = true; validateSignup(); });
 
 ['input'].forEach(evt => {
-  suEmail.addEventListener(evt, () => validateSignup());
-  suPass.addEventListener(evt,  () => validateSignup());
-  suPass2.addEventListener(evt, () => validateSignup());
+  suFirst ?.addEventListener(evt, () => validateSignup());
+  suMiddle?.addEventListener(evt, () => validateSignup());
+  suLast  ?.addEventListener(evt, () => validateSignup());
+  suEmail ?.addEventListener(evt, () => validateSignup());
+  suPass  ?.addEventListener(evt, () => validateSignup());
+  suPass2 ?.addEventListener(evt, () => validateSignup());
 });
 validateSignup();
 
-$('#signupForm').addEventListener('submit', async (e) => {
+$('#signupForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   suSubmitted = true;
   if (!validateSignup({ forceShow: true })) return;
 
-  suMsg.textContent = 'Creating account...';
+  if (suMsg) suMsg.textContent = 'Creating account...';
   try {
-    await postJSON('/api/auth/register', { email: suEmail.value.trim(), password: suPass.value });
-    suMsg.textContent = 'Account created! Please sign in.';
+    const body = {
+      firstName: (suFirst.value  || '').trim(),
+      middleName: (suMiddle.value || '').trim() || null,
+      lastName:  (suLast.value   || '').trim(),
+      email:     (suEmail.value  || '').trim(),
+      password:  suPass.value
+    };
+    await postJSON('/api/auth/register', body);
+    if (suMsg) suMsg.textContent = 'Account created! Please sign in.';
     setMode('login');
-    $('#liEmail').value = suEmail.value.trim();
-    $('#liPass').focus();
+    const liEmail = $('#liEmail'); const liPass = $('#liPass');
+    if (liEmail) liEmail.value = body.email;
+    if (liPass) liPass.focus();
   } catch (err) {
-    suMsg.textContent = err.message;
+    if (suMsg) suMsg.textContent = err.message;
   }
 });
 
 /* ============================================================
-   LOGIN: show errors only when a mistake happens (touched/submit)
+   LOGIN validation + submit (unchanged)
 ============================================================ */
 const liEmail = $('#liEmail');
 const liPass  = $('#liPass');
@@ -127,15 +148,17 @@ const liMsg   = $('#liMsg');
 let liTouched = { email: false, pass: false };
 let liSubmitted = false;
 
+function emailValidInput(inputEl) {
+  const v = inputEl?.value?.trim() || '';
+  return v && (inputEl.checkValidity ? inputEl.checkValidity() : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+}
+
 function validateLogin({ forceShow = false } = {}) {
-  const email = liEmail.value.trim();
-  const pass  = liPass.value;
+  const emailOk = emailValidInput(liEmail);
+  const passOk  = (liPass?.value || '').length > 0;
 
-  const emailOk = emailValid(email);
-  const passOk  = pass.length > 0;
-
-  const showEmailErr = (liTouched.email || liSubmitted || forceShow) && !emailOk && email.length > 0;
-  const showPassErr  = (liTouched.pass  || liSubmitted || forceShow) && !passOk  && pass.length  > 0;
+  const showEmailErr = (liTouched.email || liSubmitted || forceShow) && !emailOk && (liEmail?.value || '').length > 0;
+  const showPassErr  = (liTouched.pass  || liSubmitted || forceShow) && !passOk  && (liPass?.value  || '').length > 0;
 
   showErr('#liEmailErr', showEmailErr ? 'Enter a valid email.' : '');
   showErr('#liPassErr',  showPassErr  ? 'Password is required.' : '');
@@ -143,26 +166,24 @@ function validateLogin({ forceShow = false } = {}) {
   return emailOk && passOk;
 }
 
-liEmail.addEventListener('blur', () => { liTouched.email = true; validateLogin(); });
-liPass.addEventListener('blur',  () => { liTouched.pass  = true; validateLogin(); });
+liEmail?.addEventListener('blur', () => { liTouched.email = true; validateLogin(); });
+liPass ?.addEventListener('blur', () => { liTouched.pass  = true; validateLogin(); });
 ['input'].forEach(evt => {
-  liEmail.addEventListener(evt, () => validateLogin());
-  liPass.addEventListener(evt,  () => validateLogin());
+  liEmail?.addEventListener(evt, () => validateLogin());
+  liPass ?.addEventListener(evt, () => validateLogin());
 });
 
-$('#loginForm').addEventListener('submit', async (e) => {
+$('#loginForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   liSubmitted = true;
   if (!validateLogin({ forceShow: true })) return;
 
-  // Do not show a transient "Signing in..." message when the user clicks login.
-  // Keep the message area empty unless there's an error to display.
-  liMsg.textContent = '';
+  if (liMsg) liMsg.textContent = '';
   try {
     const data = await postJSON('/api/auth/login', { email: liEmail.value.trim(), password: liPass.value });
-  localStorage.setItem('token', data.token);
-  location.replace('../markets/market.html');
+    localStorage.setItem('token', data.token);
+    location.replace('../markets/market.html');
   } catch (err) {
-    liMsg.textContent = err.message;
+    if (liMsg) liMsg.textContent = err.message;
   }
 });

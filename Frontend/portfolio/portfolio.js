@@ -1,39 +1,155 @@
-(async function(){
-  try{
-    // Load account and summary
-    const acct = await authed('/api/account');
-    const summary = await authed('/api/account/summary');
-    const txs = await authed('/api/transactions');
+/* portfolio.js */
 
-    document.getElementById('accountName').textContent = acct.email || '';
-    document.getElementById('accountEmail').textContent = `Member since: ${new Date(acct.created_at).toLocaleDateString()}`;
-    document.getElementById('accIncome').textContent = fmtPrice(summary.income || 0);
-    document.getElementById('accExpenses').textContent = fmtPrice(summary.expenses || 0);
+// Point to backend on port 3001 when frontend runs on 8080
+const API_BASE =
+  location.port === '8080' ? 'http://localhost:3001' : ''; // '' = same origin if you use a proxy
 
-    // Render holdings chart (use wallets from summary)
-    const holdings = (summary.wallets || []).map(r=>({ asset:r.asset, balance: Number(r.balance || 0) }));
-    await ensureChartJsLoaded();
-    const canvas = document.getElementById('portfolioChart'); if (!canvas) return;
-    const labels = holdings.map(h=>h.asset); const values = holdings.map(h=>h.balance || 0);
-    const colors = labels.map((_,i)=>`hsl(${(i*47)%360} 70% 50%)`);
-    if (window._portfolioChart) window._portfolioChart.destroy();
-    window._portfolioChart = new Chart(canvas.getContext('2d'), { type: 'doughnut', data:{ labels, datasets:[{ data: values, backgroundColor: colors }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } } });
-    const legendDiv = document.getElementById('portfolioLegend'); legendDiv.innerHTML=''; labels.forEach((lbl,i)=>{ const item=document.createElement('div'); item.className='legend-item'; const sw=document.createElement('span'); sw.className='legend-swatch'; sw.style.background=colors[i]; const l=document.createElement('div'); l.className='legend-label'; l.innerHTML=`<strong>${lbl}</strong> &nbsp; <span class="num-compact">${shortNumber(values[i])}</span>`; item.appendChild(sw); item.appendChild(l); legendDiv.appendChild(item); });
+const token = localStorage.getItem('token');
+const $ = (id) => document.getElementById(id);
 
-    // Render transactions
-    const tb = document.querySelector('#transactionsTable tbody'); if (tb) { tb.innerHTML=''; (txs||[]).forEach(t=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${new Date(t.created_at).toLocaleString()}</td><td>${t.symbol}</td><td class="num">${Number(t.qty).toLocaleString()}</td><td class="num">${fmtPrice(t.price)}</td><td class="num">${fmtPrice((t.price||0)*(t.qty||0))}</td>`; tb.appendChild(tr); }); }
+const fmtUSD = (n) =>
+  typeof n === 'number' && !Number.isNaN(n)
+    ? n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+    : '--';
 
-    // Compute a naive USD balance by fetching CoinGecko prices for base assets (if any)
-    const ids = (labels.map(l => {
-      // convert e.g. BTC-USD -> bitcoin, ETH-USD -> ethereum, fallback to empty
-      if (l.endsWith('-USD')) return l.split('-')[0].toLowerCase(); return '';
-    }).filter(Boolean)).join(',');
-    if (ids) {
-      try{
-        const cg = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ids)}&vs_currencies=usd`);
-        if (cg.ok){ const prices = await cg.json(); let total=0; holdings.forEach(h=>{ const id = h.asset.endsWith('-USD') ? h.asset.split('-')[0].toLowerCase() : null; const p = id && prices[id] ? prices[id].usd : null; if (p) total += p * (h.balance||0); }); document.getElementById('accountBalance').textContent = fmtPrice(total); }
-      }catch(e){}
-    }
-  }catch(err){ /* silent */ }
-  document.getElementById('logoutBtn')?.addEventListener('click', ()=>{ localStorage.removeItem('token'); location.replace('../auth/auth.html'); });
+function fullName(acct) {
+  return [acct.first_name, acct.middle_name, acct.last_name].filter(Boolean).join(' ');
+}
+
+// Logout
+const logoutBtn = $('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    location.href = '../auth/auth.html';
+  });
+}
+
+(async function init() {
+  try {
+    await Promise.all([loadAccount(), loadSummary(), loadTransactions()]);
+  } catch (e) {
+    console.error('init error', e);
+  }
 })();
+
+async function authedGet(path) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
+  return res.json();
+}
+
+async function loadAccount() {
+  try {
+    const acct = await authedGet('/api/account');
+
+    const name = fullName(acct) || acct.email || '—';
+    const nameEl = $('acctName');
+    if (nameEl) nameEl.textContent = name;
+
+    const sinceEl = $('acctSince');
+    if (sinceEl && acct.created_at) {
+      const d = new Date(acct.created_at);
+      sinceEl.textContent = d.toLocaleDateString();
+    }
+  } catch (e) {
+    console.error('loadAccount error', e);
+  }
+}
+
+async function loadSummary() {
+  try {
+    const sum = await authedGet('/api/account/summary');
+
+    const bal = (Number(sum.income) || 0) - (Number(sum.expenses) || 0);
+    $('balanceUSD').textContent = fmtUSD(bal);
+    $('incomeUSD').textContent = fmtUSD(Number(sum.income) || 0);
+    $('expensesUSD').textContent = fmtUSD(Number(sum.expenses) || 0);
+
+    const wallets = Array.isArray(sum.wallets) ? sum.wallets : [];
+    const parts = wallets
+      .filter(w => Number(w.balance) > 0)
+      .map(w => ({ label: String(w.asset), value: Number(w.balance) }));
+
+    renderDonut(parts);
+  } catch (e) {
+    console.error('loadSummary error', e);
+  }
+}
+
+async function loadTransactions() {
+  try {
+    const rows = await authedGet('/api/transactions');
+    const tbody = $('txTableBody');
+    tbody.innerHTML = '';
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      const created = new Date(r.created_at);
+      const value = Number(r.price) * Number(r.qty);
+
+      tr.innerHTML = `
+        <td>${created.toLocaleString()}</td>
+        <td>${r.symbol}</td>
+        <td>${Number(r.qty).toFixed(12)}</td>
+        <td>${r.price ? fmtUSD(Number(r.price)) : '-'}</td>
+        <td>${r.price ? fmtUSD(value) : '-'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    console.error('loadTransactions error', e);
+  }
+}
+
+/* --------- Donut chart --------- */
+let chart;
+function renderDonut(parts) {
+  const ctx = document.getElementById('portfolioChart');
+  if (!ctx) return;
+
+  if (chart) { chart.destroy(); chart = undefined; }
+
+  if (!parts.length) {
+    const legend = document.getElementById('chartLegend');
+    if (legend) legend.textContent = 'No holdings yet';
+    return;
+  }
+
+  const labels = parts.map(p => p.label);
+  const data = parts.map(p => p.value);
+
+  chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (item) => `${labels[item.dataIndex]}: ${data[item.dataIndex]}` } }
+      },
+      cutout: '64%',
+      animation: { duration: 450 }
+    }
+  });
+
+  const legend = document.getElementById('chartLegend');
+  if (legend) {
+    legend.innerHTML = labels.map((l, i) => {
+      const c = chart.data.datasets[0].backgroundColor?.[i] || '#8aa';
+      return `
+        <span class="legend-item" style="display:inline-flex;align-items:center;margin-right:12px;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};margin-right:6px;"></span>
+          ${l}
+        </span>`;
+    }).join('');
+  }
+}

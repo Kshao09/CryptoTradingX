@@ -1,8 +1,52 @@
-/* Trade page layout overrides for the Exchange card moved from inline styles */
-.exchange-row{ margin-top:18px; display:flex; gap:16px; align-items:center }
-.exchange-card{ padding:12px; min-width:540px; display:flex; flex-direction:row; gap:12px; align-items:center }
-.exchange-title{ margin:0 8px 0 0; white-space:nowrap }
-.exchange-qty{ width:120px; padding:8px; border-radius:8px; border:1px solid #22314c; background:var(--panel-2); color:var(--text) }
-.exchange-coin{ padding:8px; border-radius:8px; border:1px solid #22314c; background:var(--panel-2); color:var(--text); min-width:220px; max-width:48% }
-.exchange-result{ margin-left:8px; white-space:nowrap }
-/* Trade page minimal styles — reuse global trade-bar styles from styles.css */
+/* trade.css — Purchase-only page, with forced vertical scrolling */
+
+/* Force vertical scroll available on all viewports */
+html, body { height: 100%; }
+body.page { overflow-y: auto !important; }
+main.content { overflow: visible !important; min-height: 0; padding-bottom: 64px; }
+
+/* Layout */
+.purchase-card {
+  max-width: 980px;
+  margin: 24px auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.purchase-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.purchase-row .full { grid-column: 1 / -1; }
+
+.input, .select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #22314c;
+  background: var(--panel-2, #0f1729);
+  color: var(--text, #e7e9f5);
+  outline: none;
+}
+.input:focus, .select:focus { border-color: #2e67ff; }
+
+/* Stripe Elements */
+#card-element {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #22314c;
+  background: var(--panel-2, #0f1729);
+}
+#card-errors { min-height: 20px; color: #ff5c5c; }
+
+.acceptance { font-size: 0.9rem; opacity: 0.9; }
+.btn.pay { min-height: 40px; }
+
+.success { color: #24c78e; }
+.error { color: #ff5c5c; }
+
+/* Utility */
+.hidden { display: none !important; }
