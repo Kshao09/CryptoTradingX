@@ -19,7 +19,6 @@
         <section id="signupPanel" class="panel">
           <h2 class="panel-title">Create account</h2>
           <form id="signupForm" class="form" novalidate>
-
             <!-- New: name inputs -->
             <div class="grid-3">
               <div>
@@ -81,6 +80,24 @@
             <button type="submit" class="btn">Login</button>
           </form>
           <p id="liMsg" class="msg"></p>
+        </section>
+
+        <!-- VERIFY (new) -->
+        <section id="verifyPanel" class="panel" hidden>
+          <h2 class="panel-title">Verify your email</h2>
+          <form id="verifyForm" class="form" novalidate>
+            <p class="muted">We sent a 6-digit code to <b id="vEmail">—</b>.</p>
+            <label>Verification code
+              <input id="vCode" inputmode="numeric" pattern="\\d{6}" maxlength="6" placeholder="123456" />
+            </label>
+            <div id="vCodeErr" class="field-msg"></div>
+
+            <div class="actions-row">
+              <button type="submit" class="btn">Verify</button>
+              <button type="button" id="resendBtn" class="btn ghost">Resend code</button>
+            </div>
+          </form>
+          <p id="vMsg" class="msg"></p>
         </section>
       </div>
     </div>

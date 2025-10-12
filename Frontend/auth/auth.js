@@ -1,36 +1,63 @@
-// auth.js — robust toggle + signup/login with name fields
+// auth.js — signup/login + email verification merge
 
 const $ = (sel) => document.querySelector(sel);
 
-// If already logged in, go to markets page
+// If already logged in, go straight to portal
 try {
   const tokenExisting = localStorage.getItem('token');
-  if (tokenExisting) location.replace('../markets/market.html');
+  // if (tokenExisting) location.replace('../portfolio/portfolio.html');
 } catch {}
 
-/* ---------- Mode toggle ---------- */
-const panels = { signup: $('#signupPanel'), login: $('#loginPanel') };
-const link = $('#modeLink');
+/* ---------- Panels & mode toggle ---------- */
+const panels = {
+  signup: $('#signupPanel'),
+  login: $('#loginPanel'),
+  verify: $('#verifyPanel'),
+};
+const link = $('#modeLink'); // signup/login switch link (hidden during verify)
 
 const params = new URLSearchParams(location.search);
 let mode = (params.get('mode') === 'login') ? 'login' : 'signup';
 
 function setMode(next) {
   mode = next;
-  const isLogin = mode === 'login';
-  if (panels.signup) panels.signup.hidden = isLogin;
+  const isLogin = next === 'login';
+  const isSignup = next === 'signup';
+  const isVerify = next === 'verify';
+
+  if (panels.signup) panels.signup.hidden = !isSignup;
   if (panels.login)  panels.login.hidden  = !isLogin;
-  if (link) link.textContent = isLogin ? 'New here? Create account →' : 'Already registered? Sign in →';
+  if (panels.verify) panels.verify.hidden = !isVerify;
+
+  // hide switch link during verify
+  if (link) {
+    link.hidden = isVerify;
+    link.textContent = isLogin ? 'New here? Create account →' : 'Already registered? Sign in →';
+  }
+
   hideAllErrors();
   $('#suMsg') && ($('#suMsg').textContent = '');
   $('#liMsg') && ($('#liMsg').textContent = '');
-  (isLogin ? $('#liEmail') : $('#suFirst'))?.focus();
+  $('#vMsg')  && ($('#vMsg').textContent  = '');
+
+  if (isLogin)   $('#liEmail')?.focus();
+  if (isSignup)  $('#suFirst')?.focus();
+  if (isVerify)  $('#vCode')?.focus();
 }
-if (link) link.addEventListener('click', (e) => { e.preventDefault(); setMode(mode === 'login' ? 'signup' : 'login'); });
+
+if (link) {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    setMode(mode === 'login' ? 'signup' : 'login');
+  });
+}
 setMode(mode);
 
 /* ---------- Helpers ---------- */
-function postJSON(path, body) { return api(path, { method: 'POST', body: JSON.stringify(body) }); } // uses utils.js (:contentReference[oaicite:9]{index=9})
+// Uses utils.js `api(path, init)` so it applies base URL and headers
+function postJSON(path, body) {
+  return api(path, { method: 'POST', body: JSON.stringify(body) });
+}
 
 function showErr(sel, msg) {
   const el = typeof sel === 'string' ? $(sel) : sel;
@@ -42,15 +69,19 @@ function hideAllErrors() {
   document.querySelectorAll('.field-msg').forEach(n => { n.textContent = ''; n.classList.remove('show'); });
 }
 
-// Name validation: allow letters, spaces, hyphens, apostrophes (Unicode friendly)
+// Name validation: letters, spaces, hyphens, apostrophes (Unicode ok)
 function nameValid(value, { optional = false } = {}) {
   const s = (value || '').trim();
   if (!s) return optional; // ok if optional
   return /^[\p{L}][\p{L}\p{M}'\- ]{1,99}$/u.test(s); // 2–100 chars total
 }
+function emailValidInput(inputEl) {
+  const v = inputEl?.value?.trim() || '';
+  return v && (inputEl.checkValidity ? inputEl.checkValidity() : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+}
 
 /* ============================================================
-   SIGNUP validation + submit
+   SIGNUP validation + submit  (now triggers email verification)
 ============================================================ */
 const suFirst  = $('#suFirst');
 const suMiddle = $('#suMiddle');
@@ -64,21 +95,16 @@ const suMsg    = $('#suMsg');
 let suTouched = { first:false, middle:false, last:false, email:false, pass:false, confirm:false };
 let suSubmitted = false;
 
-function emailValidInput(inputEl) {
-  const v = inputEl?.value?.trim() || '';
-  return v && (inputEl.checkValidity ? inputEl.checkValidity() : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
-}
-
 function validateSignup({ forceShow = false } = {}) {
   const firstOk   = nameValid(suFirst?.value);
   const middleOk  = nameValid(suMiddle?.value, { optional: true });
   const lastOk    = nameValid(suLast?.value);
   const emailOk   = emailValidInput(suEmail);
-  const passOk    = (suPass?.value || '').length >= 8 && /[0-9]/.test(suPass.value) && /[A-Za-z]/.test(suPass.value); // simple strength check
+  const passOk    = (suPass?.value || '').length >= 8 && /[0-9]/.test(suPass.value) && /[A-Za-z]/.test(suPass.value);
   const confirmOk = (suPass2?.value || '').length > 0 && suPass?.value === suPass2?.value;
 
   const showFirstErr   = (suTouched.first   || suSubmitted || forceShow) && !firstOk  && (suFirst?.value  || '').length > 0;
-  const showMiddleErr  = (suTouched.middle  || suSubmitted || forceShow) && !middleOk && (suMiddle?.value || '').length > 0; // only if provided
+  const showMiddleErr  = (suTouched.middle  || suSubmitted || forceShow) && !middleOk && (suMiddle?.value || '').length > 0;
   const showLastErr    = (suTouched.last    || suSubmitted || forceShow) && !lastOk   && (suLast?.value   || '').length > 0;
   const showEmailErr   = (suTouched.email   || suSubmitted || forceShow) && !emailOk  && (suEmail?.value  || '').length > 0;
   const showPassErr    = (suTouched.pass    || suSubmitted || forceShow) && !passOk   && (suPass?.value   || '').length > 0;
@@ -102,7 +128,6 @@ suLast  ?.addEventListener('blur',  () => { suTouched.last    = true; validateSi
 suEmail ?.addEventListener('blur',  () => { suTouched.email   = true; validateSignup(); });
 suPass  ?.addEventListener('blur',  () => { suTouched.pass    = true; validateSignup(); });
 suPass2 ?.addEventListener('blur',  () => { suTouched.confirm = true; validateSignup(); });
-
 ['input'].forEach(evt => {
   suFirst ?.addEventListener(evt, () => validateSignup());
   suMiddle?.addEventListener(evt, () => validateSignup());
@@ -113,6 +138,10 @@ suPass2 ?.addEventListener('blur',  () => { suTouched.confirm = true; validateSi
 });
 validateSignup();
 
+const vEmail = $('#vEmail');
+const vCode  = $('#vCode');
+const vMsg   = $('#vMsg');
+
 $('#signupForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   suSubmitted = true;
@@ -120,26 +149,77 @@ $('#signupForm')?.addEventListener('submit', async (e) => {
 
   if (suMsg) suMsg.textContent = 'Creating account...';
   try {
+    const firstName  = (suFirst.value  || '').trim();
+    const middleName = (suMiddle.value || '').trim() || null;
+    const lastName   = (suLast.value   || '').trim();
+    const email      = (suEmail.value  || '').trim();
+    const password   = suPass.value;
+
+    // Send BOTH camelCase and snake_case to be compatible with your server versions
     const body = {
-      firstName: (suFirst.value  || '').trim(),
-      middleName: (suMiddle.value || '').trim() || null,
-      lastName:  (suLast.value   || '').trim(),
-      email:     (suEmail.value  || '').trim(),
-      password:  suPass.value
+      firstName, middleName, lastName, email, password,
+      first_name: firstName, middle_name: middleName, last_name: lastName
     };
-    await postJSON('/api/auth/register', body);
-    if (suMsg) suMsg.textContent = 'Account created! Please sign in.';
-    setMode('login');
-    const liEmail = $('#liEmail'); const liPass = $('#liPass');
-    if (liEmail) liEmail.value = body.email;
-    if (liPass) liPass.focus();
+
+    const resp = await postJSON('/api/auth/register', body);
+
+    if (resp && resp.message === 'verification_sent') {
+      suMsg.textContent = '';
+      $('#vEmail').textContent = email;
+      $('#verifyForm').dataset.email = email;
+      setMode('verify');
+      $('#vMsg').textContent = 'Verification code sent. Check your inbox.';
+      $('#vCode')?.focus();
+      return;
+    }
+
+    // Anything else is an error
+    throw new Error(resp?.message || 'Register failed');
   } catch (err) {
-    if (suMsg) suMsg.textContent = err.message;
+    if (suMsg) suMsg.textContent = err.message || 'Register failed';
   }
 });
 
 /* ============================================================
-   LOGIN validation + submit (unchanged)
+   VERIFY code (new) — success => token => portal
+============================================================ */
+$('#verifyForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showErr('#vCodeErr', '');
+  if (!vCode?.value || !/^\d{6}$/.test(vCode.value.trim())) {
+    showErr('#vCodeErr', 'Enter the 6-digit code.');
+    return;
+  }
+  try {
+    const email = $('#verifyForm').dataset.email;
+    const code = vCode.value.trim();
+    const data = await postJSON('/api/auth/verify', { email, code });
+    if (!data?.token) throw new Error('Verify failed');
+    localStorage.setItem('token', data.token);
+    location.replace('../portfolio/portfolio.html');
+  } catch (err) {
+    vMsg.textContent = err.message || 'Verification failed';
+  }
+});
+
+// Resend code
+$('#resendBtn')?.addEventListener('click', async () => {
+  vMsg.textContent = '';
+  const email = $('#verifyForm').dataset.email;
+  try {
+    const data = await postJSON('/api/auth/resend-code', { email });
+    if (data?.message === 'verification_sent') {
+      vMsg.textContent = 'New code sent.';
+    } else {
+      vMsg.textContent = 'Check your inbox for the code.';
+    }
+  } catch (err) {
+    vMsg.textContent = err.message || 'Could not resend code';
+  }
+});
+
+/* ============================================================
+   LOGIN validation + submit (handles unverified -> verify)
 ============================================================ */
 const liEmail = $('#liEmail');
 const liPass  = $('#liPass');
@@ -147,11 +227,6 @@ const liMsg   = $('#liMsg');
 
 let liTouched = { email: false, pass: false };
 let liSubmitted = false;
-
-function emailValidInput(inputEl) {
-  const v = inputEl?.value?.trim() || '';
-  return v && (inputEl.checkValidity ? inputEl.checkValidity() : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
-}
 
 function validateLogin({ forceShow = false } = {}) {
   const emailOk = emailValidInput(liEmail);
@@ -178,12 +253,35 @@ $('#loginForm')?.addEventListener('submit', async (e) => {
   liSubmitted = true;
   if (!validateLogin({ forceShow: true })) return;
 
-  if (liMsg) liMsg.textContent = '';
+  liMsg.textContent = '';
   try {
-    const data = await postJSON('/api/auth/login', { email: liEmail.value.trim(), password: liPass.value });
-    localStorage.setItem('token', data.token);
-    location.replace('../markets/market.html');
+    const email = liEmail.value.trim();
+    const password = liPass.value;
+    const data = await postJSON('/api/auth/login', { email, password });
+
+    // Success: token present
+    if (data?.token) {
+      localStorage.setItem('token', data.token);
+      location.replace('../portfolio/portfolio.html');
+      return;
+    }
+    throw new Error('Login failed');
   } catch (err) {
-    if (liMsg) liMsg.textContent = err.message;
+    // If backend blocks unverified accounts with 403 + email_not_verified
+    const msg = err.message || '';
+    if (/email_not_verified/i.test(msg)) {
+      if (vEmail) vEmail.textContent = liEmail.value.trim();
+      $('#verifyForm').dataset.email = liEmail.value.trim();
+      setMode('verify');
+      vMsg.textContent = 'Email not verified. Enter the code we sent.';
+      vCode?.focus();
+      return;
+    }
+    liMsg.textContent = msg;
   }
+});
+
+// Keep code field numeric-only UX nicety
+vCode?.addEventListener('input', () => {
+  vCode.value = vCode.value.replace(/\D+/g, '').slice(0, 6);
 });

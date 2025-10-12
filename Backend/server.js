@@ -8,6 +8,8 @@ const http = require('http');
 const WebSocket = require('ws');
 const Stripe = require('stripe');
 const { query, exec } = require('./db');
+const nodemailer = require('nodemailer');
+
 
 const app = express();
 app.use(cors());
@@ -67,58 +69,151 @@ function auth(req, res, next) {
 // Allow letters (incl. accents), spaces, hyphens, apostrophes; 2–100 chars
 const NAME_RE = /^[\p{L}][\p{L}\p{M}'\- ]{1,99}$/u;
 
-// ---------- Health ----------
-app.get(['/api/health', '/health'], (_req, res) => res.json({ ok: true }));
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: Boolean(Number(process.env.SMTP_SECURE || 0)), // true for 465
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+});
+
+function make6() {
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+}
+
+async function sendVerificationEmail(to, code) {
+  const from = process.env.SMTP_FROM || 'no-reply@cryptox.app';
+  const ttlMin = Number(process.env.VERIFY_CODE_TTL_MIN || 10);
+  const html = `
+    <div style="font-family:system-ui,Segoe UI,Arial">
+      <h2>Verify your email</h2>
+      <p>Your CryptoTradingX verification code is:</p>
+      <p style="font-size:24px;font-weight:700;letter-spacing:2px">${code}</p>
+      <p>This code expires in ${ttlMin} minutes.</p>
+    </div>`;
+  await transporter.sendMail({
+    from, to,
+    subject: 'Your CryptoTradingX verification code',
+    text: `Your verification code is ${code}. It expires in ${ttlMin} minutes.`,
+    html,
+  });
+}
 
 // ---------- Auth ----------
 app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { firstName, middleName, lastName, email, password } = req.body || {};
-
-    // Validate fields
-    if (!NAME_RE.test((firstName || '').trim()))
-      return res.status(400).json({ message: 'Invalid first name' });
-    if (middleName && !NAME_RE.test((middleName || '').trim()))
-      return res.status(400).json({ message: 'Invalid middle name' });
-    if (!NAME_RE.test((lastName || '').trim()))
-      return res.status(400).json({ message: 'Invalid last name' });
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return res.status(400).json({ message: 'Invalid email' });
-    if (!password || password.length < 8 || !/[0-9]/.test(password) || !/[A-Za-z]/.test(password))
-      return res.status(400).json({ message: 'Weak password' });
-
-    const exists = await query('SELECT id FROM users WHERE email=?', [email.trim()]);
-    if (exists.length) return res.status(409).json({ message: 'Email already registered' });
-
-    const hash = await bcrypt.hash(password, 12);
-    await exec(
-      `INSERT INTO users (email, first_name, middle_name, last_name, password_hash)
-       VALUES (?, ?, ?, ?, ?)`,
-      [email.trim(), firstName.trim(), (middleName || '').trim() || null, lastName.trim(), hash]
-    );
-
-    const user = (await query('SELECT id,email FROM users WHERE email=?', [email.trim()]))[0];
-    return res.status(201).json({ message: 'ok', token: sign(user) });
-  } catch (e) {
-    if (e?.code === 'ER_DUP_ENTRY')
-      return res.status(409).json({ message: 'Email already registered' });
-    console.error('register error', e);
-    return res.status(500).json({ message: 'Server error' });
+  const { email, password, first_name, middle_name, last_name } = req.body || {};
+  if (!email || !password || !first_name || !last_name) {
+    return res.status(400).json({ message: 'missing fields' });
   }
+
+  const exists = await query('SELECT id FROM users WHERE email=?', [email]);
+  if (exists.length) return res.status(409).json({ message: 'email already registered' });
+
+  const hash = await bcrypt.hash(password, 10);
+  const code = make6();
+  const ttlMin = Number(process.env.VERIFY_CODE_TTL_MIN || 10);
+  const expires = new Date(Date.now() + ttlMin * 60 * 1000);
+
+  await exec(
+    'INSERT INTO users (email, first_name, middle_name, last_name, password_hash, is_verified, verification_code, verification_expires) VALUES (?,?,?,?,?,?,?,?)',
+    [email, first_name, middle_name || null, last_name, hash, 0, code, expires]
+  );
+
+  try {
+    await sendVerificationEmail(email, code);
+  } catch (e) {
+      console.error('send mail error:', {
+      message: e.message,
+      code: e.code,
+      command: e.command,
+      response: e.response,
+      responseCode: e.responseCode,
+      rejected: e.rejected,
+      stack: e.stack
+    });
+    // Optionally delete user on mail failure
+    return res.status(500).json({ message: 'failed_to_send_email' });
+  }
+
+  res.json({ message: 'verification_sent' });
 });
 
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ message: 'email/password required' });
 
-  const rows = await query('SELECT id,email,password_hash FROM users WHERE email=?', [email]);
+  const rows = await query(
+    'SELECT id,email,password_hash,is_verified,first_name,last_name FROM users WHERE email=?',
+    [email]
+  );
   const u = rows[0];
   if (!u) return res.status(401).json({ message: 'invalid credentials' });
 
   const ok = await bcrypt.compare(password, u.password_hash);
   if (!ok) return res.status(401).json({ message: 'invalid credentials' });
 
+  if (!u.is_verified) return res.status(403).json({ message: 'email_not_verified' });
+
   res.json({ token: sign(u) });
+});
+
+// Verify code -> mark verified -> return JWT so we can go straight to portal
+app.post('/api/auth/verify', async (req, res) => {
+  const { email, code } = req.body || {};
+  if (!email || !code) return res.status(400).json({ message: 'missing fields' });
+
+  const rows = await query(
+    'SELECT id,email,first_name,last_name,is_verified,verification_code,verification_expires FROM users WHERE email=?',
+    [email]
+  );
+  if (!rows.length) return res.status(404).json({ message: 'user_not_found' });
+
+  const u = rows[0];
+  if (u.is_verified) return res.json({ token: sign(u) });
+
+  if (u.verification_code !== code) return res.status(400).json({ message: 'invalid_code' });
+  if (!u.verification_expires || new Date(u.verification_expires) < new Date()) {
+    return res.status(400).json({ message: 'code_expired' });
+  }
+
+  await exec(
+    'UPDATE users SET is_verified=1, verified_at=NOW(), verification_code=NULL, verification_expires=NULL WHERE id=?',
+    [u.id]
+  );
+  res.json({ token: sign(u) });
+});
+
+// Optional: resend a new code (simple 30s throttle)
+app.post('/api/auth/resend-code', async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ message: 'missing email' });
+
+  const rows = await query(
+    'SELECT id,email,is_verified,verification_expires FROM users WHERE email=?',
+    [email]
+  );
+  const u = rows[0];
+  if (!u) return res.status(404).json({ message: 'user_not_found' });
+  if (u.is_verified) return res.status(409).json({ message: 'already_verified' });
+
+  // naive throttle: if an unexpired code exists and was just created, let it stand
+  const now = Date.now();
+  const expMs = u.verification_expires ? new Date(u.verification_expires).getTime() : 0;
+  if (expMs && expMs - now > (Number(process.env.VERIFY_CODE_TTL_MIN || 10) - 0.5) * 60 * 1000) {
+    return res.status(429).json({ message: 'too_many_requests' });
+  }
+
+  const code = make6();
+  const ttlMin = Number(process.env.VERIFY_CODE_TTL_MIN || 10);
+  const expires = new Date(now + ttlMin * 60 * 1000);
+
+  await exec('UPDATE users SET verification_code=?, verification_expires=? WHERE id=?', [
+    code,
+    expires,
+    u.id,
+  ]);
+
+  await sendVerificationEmail(email, code);
+  res.json({ message: 'verification_sent' });
 });
 
 // ---------- Orders & Portfolio ----------
