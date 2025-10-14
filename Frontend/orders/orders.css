@@ -58,20 +58,61 @@
 
 /* Table basics (inherits your styles.css table design) */
 .table { 
-    width: 100%; 
-    border-collapse: collapse; 
+  width: 100%; 
+  border-collapse: collapse; 
 }
-
 .table th, .table td { 
-    padding: 14px 16px; 
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 14px 16px; 
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.table tbody tr:hover {
+  background: rgba(255,255,255,0.02); 
 }
 
-.table tbody tr:hover {
-    background: rgba(255,255,255,0.02); 
+/* --- Alignment & numeric typography --- */
+.table.orders-table {
+  table-layout: fixed;   /* works with <colgroup> widths */
+}
+
+/* ID column: right-aligned */
+.table.orders-table th:nth-child(1),
+.table.orders-table td:nth-child(1) {
+  text-align: right;
+  padding-right: 20px;
+}
+
+/* Symbol: left */
+.table.orders-table th:nth-child(2),
+.table.orders-table td:nth-child(2) {
+  text-align: left;
+}
+
+/* Side, Type, Status: centered */
+.table.orders-table th:nth-child(3),
+.table.orders-table td:nth-child(3),
+.table.orders-table th:nth-child(4),
+.table.orders-table td:nth-child(4),
+.table.orders-table th:nth-child(7),
+.table.orders-table td:nth-child(7) {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+/* Qty & Price: right + tabular figures so decimals line up */
+.table.orders-table th:nth-child(5),
+.table.orders-table td:nth-child(5),
+.table.orders-table th:nth-child(6),
+.table.orders-table td:nth-child(6) {
+  text-align: right;
+}
+.table.orders-table td:nth-child(5),
+.table.orders-table td:nth-child(6) {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
 /* Utilities */
 .hidden { 
-    display: none !important; 
+  display: none !important; 
 }
