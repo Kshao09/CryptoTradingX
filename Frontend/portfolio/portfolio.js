@@ -1,8 +1,7 @@
 /* portfolio.js */
-
-// Point to backend on port 3001 when frontend runs on 8080
+// portfolio.js
 const API_BASE =
-  location.port === '8080' ? 'http://localhost:3001' : ''; // '' = same origin if you use a proxy
+  (window.CONFIG && window.CONFIG.API_BASE) || 'https://localhost:3001';
 
 const token = localStorage.getItem('token');
 const $ = (id) => document.getElementById(id);
@@ -33,12 +32,8 @@ if (logoutBtn) {
   }
 })();
 
-async function authedGet(path) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
-  return res.json();
+async function authedGet(path, opts) {
+  return authed(path, opts); // from utils.js
 }
 
 async function loadAccount() {
