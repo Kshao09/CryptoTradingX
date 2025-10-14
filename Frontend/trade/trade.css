@@ -1,11 +1,8 @@
-/* trade.css — Purchase-only page, with forced vertical scrolling */
-
-/* Force vertical scroll available on all viewports */
+/* Purchase-only page with normal white inputs */
 html, body { height: 100%; }
 body.page { overflow-y: auto !important; }
 main.content { overflow: visible !important; min-height: 0; padding-bottom: 64px; }
 
-/* Layout */
 .purchase-card {
   max-width: 980px;
   margin: 24px auto;
@@ -26,27 +23,65 @@ main.content { overflow: visible !important; min-height: 0; padding-bottom: 64px
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #22314c;
-  background: var(--panel-2, #0f1729);
-  color: var(--text, #e7e9f5);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #ffffff;
+  color: #111827;
   outline: none;
 }
-.input:focus, .select:focus { border-color: #2e67ff; }
+.input:focus, .select:focus {
+  border-color: #60a5fa;
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+} 
 
-/* Stripe Elements */
-#card-element {
-  padding: 12px;
+/* --- Stripe card: hard white, guaranteed height, always clickable --- */
+.stripe-card-outer {
+  background: #ffffff !important;                  /* visible white panel */
+  border: 1px solid rgba(148,163,184,0.35);
   border-radius: 10px;
-  border: 1px solid #22314c;
-  background: var(--panel-2, #0f1729);
+  padding: 10px 12px;
+  min-height: 48px;                                /* space for iframe */
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 0;
 }
-#card-errors { min-height: 20px; color: #ff5c5c; }
+
+.stripe-card-outer:focus-within {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* The mount node */
+.stripe-card-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+/* Stripe injects a private wrapper and an iframe; make sure they size and show */
+.stripe-card-inner > .__PrivateStripeElement,
+.stripe-card-inner > .__PrivateStripeElement > iframe {
+  width: 100% !important;
+  height: 28px !important;                         /* <- ensure a visible input line */
+  display: block !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  position: static !important;
+}
+
+/* Error text */
+#card-errors { min-height: 20px; color: #b91c1c; }
 
 .acceptance { font-size: 0.9rem; opacity: 0.9; }
 .btn.pay { min-height: 40px; }
 
-.success { color: #24c78e; }
-.error { color: #ff5c5c; }
-
-/* Utility */
+.success { color: #16a34a; }
+.error { color: #b91c1c; }
 .hidden { display: none !important; }
