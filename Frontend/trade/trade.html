@@ -21,12 +21,18 @@
     <button id="logoutBtn">Logout</button>
   </header>
 
+  <div class="toggle-tabs">
+    <button class="toggle-tab active" data-target="#buyCard">Buy with Card</button>
+    <button class="toggle-tab" data-target="#sellCard">Sell</button>
+    <button class="toggle-tab" data-target="#exchangeCard">Exchange</button>
+  </div>
+
   <main class="content">
-    <!-- Purchase with card (Stripe) -->
-    <section class="card purchase-card">
+    <!-- BUY WITH CARD (Stripe) -->
+    <section id="buyCard" class="card purchase-card">
       <h3>Purchase crypto with card</h3>
       <form id="purchaseForm">
-        <div class="purchase-row">
+        <div class="trade-row">
           <div>
             <label for="purchaseCoin">Coin</label>
             <select id="purchaseCoin" class="select"></select>
@@ -45,17 +51,82 @@
           </div>
           <div class="full">
             <label>Card details</label>
-            <div class="stripe-card-outer">
-              <div id="card-element" class="stripe-card-inner"></div>
-            </div>
+            <div class="stripe-card-outer"><div id="card-element" class="stripe-card-inner"></div></div>
             <div id="card-errors" role="alert"></div>
           </div>
         </div>
-        <div class="submit-wrap">
-          <button class="btn pay" id="payBtn" type="submit">Pay with card</button>
-        </div>
+        <div class="submit-wrap"><button class="btn primary" id="payBtn" type="submit">Pay with card</button></div>
         <p class="acceptance">We accept Visa, Mastercard, and American Express. Your payment is processed securely by Stripe.</p>
         <p id="purchaseMsg" class="msg"></p>
+      </form>
+    </section>
+
+    <!-- SELL -->
+    <section id="sellCard" class="card hidden">
+      <h3>Sell crypto for USD</h3>
+      <form id="sellSpot">
+        <div class="trade-row">
+          <div>
+            <label for="sellCoin">Coin</label>
+            <select id="sellCoin" class="select"></select>
+            <div class="muted tiny" id="sellOwned">You own —</div>
+          </div>
+          <div>
+            <label for="sellQty">Amount (coin)</label>
+            <div class="input-with-cta">
+              <input id="sellQty" class="input" type="number" inputmode="decimal" placeholder="0.00" min="0" step="any" />
+              <button type="button" id="sellMaxBtn" class="btn ghost small">MAX</button>
+            </div>
+          </div>
+          <div class="full">
+            <div class="summary">
+              <div class="row"><span>Mid price</span><span id="sellMid">—</span></div>
+              <div class="row"><span>Proceeds (USD)</span><span id="sellUsd">—</span></div>
+              <div class="row"><span>Est. fee (0.10%)</span><span id="sellFee">—</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="submit-wrap"><button class="btn primary" id="sellBtn" type="submit" disabled>Sell</button></div>
+        <p id="sellMsg" class="msg"></p>
+      </form>
+    </section>
+
+    <!-- EXCHANGE -->
+    <section id="exchangeCard" class="card hidden">
+      <h3>Exchange between coins</h3>
+      <form id="swapForm">
+        <div class="trade-row">
+          <div>
+            <label for="swapFrom">From</label>
+            <select id="swapFrom" class="select"></select>
+            <div class="muted tiny" id="swapOwned">You own —</div>
+          </div>
+          <div>
+            <label for="swapTo">To</label>
+            <select id="swapTo" class="select"></select>
+          </div>
+          <div class="full">
+            <label for="swapAmt">Amount (from-coin)</label>
+            <div class="input-with-cta">
+              <input id="swapAmt" class="input" type="number" inputmode="decimal" placeholder="0.00" min="0" step="any" />
+              <button type="button" id="swapMaxBtn" class="btn ghost small">MAX</button>
+            </div>
+          </div>
+          <div class="full">
+            <div class="summary">
+              <div class="row"><span>Rate</span><span id="swapRate">—</span></div>
+              <div class="row"><span>You receive (min)</span><span id="swapReceive">—</span></div>
+              <div class="row">
+                <span>Slippage</span>
+                <span>
+                  <input id="slip" type="number" min="0" step="0.1" value="0.5" class="input input-inline" /> %
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="submit-wrap"><button class="btn primary" id="swapBtn" type="submit" disabled>Swap</button></div>
+        <p id="swapMsg" class="msg"></p>
       </form>
     </section>
   </main>

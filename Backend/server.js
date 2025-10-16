@@ -1,4 +1,5 @@
-// Backend/server.js
+// Backend/server.js (CommonJS)
+// -------------------------------------------------
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
 const fs = require('fs');
@@ -10,7 +11,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const WebSocket = require('ws');
 const Stripe = require('stripe');
-const nodemailer = require('nodemailer');
 const { createClient } = require('redis');
 const { ethers } = require('ethers');
 
@@ -21,6 +21,14 @@ try {
 } catch { /* optional */ }
 
 const { query, exec } = require('./db');
+
+// === Central mailer (uses /mail folder) ===
+const {
+  sendRegistrationEmail,
+  sendBuyEmail,
+  sendSellEmail,
+  sendExchangeEmail,
+} = require('./mail');
 
 // ---------- Env ----------
 const PORT = Number(process.env.PORT || 3001);
@@ -67,7 +75,6 @@ app.post(
       return res.json({ received: true });
     } catch (e) {
       console.error('Fulfillment error:', e);
-      // acknowledge to avoid retry storms
       return res.json({ received: true, fulfillment: 'error' });
     }
   }
@@ -88,34 +95,15 @@ function auth(req, res, next) {
   catch { return res.status(401).json({ message: 'Invalid token' }); }
 }
 
-// ---------- mail ----------
-const smtpTransporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
-  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-});
-const MAIL_FROM = process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@cryptox.app';
-
-let mailReady = false;
-smtpTransporter
-  .verify()
-  .then(() => { mailReady = true; console.log('[mail] transport ready'); })
-  .catch(err => console.warn('[mail] disabled:', err.message));
-
-async function sendVerificationEmail(to, code) {
-  if (!mailReady) { console.warn('[mail] not configured; skip verification email'); return; }
-  const html = `
-    <div style="font-family:system-ui,Segoe UI,Roboto,Arial">
-      <h2>Verify your email</h2>
-      <p>Your verification code is:</p>
-      <div style="font-size:28px;font-weight:700;letter-spacing:6px">${code}</div>
-      <p>This code expires in 10 minutes.</p>
-    </div>`;
-  await smtpTransporter.sendMail({ from: MAIL_FROM, to, subject: 'Your verification code', html });
+async function getUserBasic(userId) {
+  const rows = await query(
+    'SELECT id,email,first_name AS firstName,middle_name AS middleName,last_name AS lastName FROM users WHERE id=?',
+    [userId]
+  );
+  return rows[0] || null;
 }
 
-// minimal table for email codes
+// Minimal verification table
 (async () => {
   try {
     await exec(`
@@ -142,7 +130,7 @@ app.post('/api/auth/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     await exec('INSERT INTO users(email, first_name, middle_name, last_name, password_hash) VALUES (?,?,?,?,?)',
       [email, firstName, middleName || null, lastName, hash]);
-    const user = (await query('SELECT id,email FROM users WHERE email=?', [email]))[0];
+    const user = (await query('SELECT id,email,first_name FROM users WHERE email=?', [email]))[0];
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const codeHash = await bcrypt.hash(code, 8);
@@ -153,7 +141,12 @@ app.post('/api/auth/register', async (req, res) => {
        ON DUPLICATE KEY UPDATE code_hash=VALUES(code_hash),expires_at=VALUES(expires_at),attempts=0`,
       [user.id, codeHash, expires]
     );
-    await sendVerificationEmail(email, code);
+
+    try {
+      const mailRes = await sendRegistrationEmail(email, { firstName: user.first_name || 'Trader', code });
+      console.log('[mail] REGISTRATION ->', email, mailRes);
+    } catch (e) { console.warn('[mail] registration send failed:', e.message); }
+
     res.json({ ok: true, userId: user.id });
   } catch (e) {
     console.error('register error:', e);
@@ -241,7 +234,18 @@ app.get('/api/account/summary', auth, async (req, res) => {
   res.json(summary);
 });
 
-// place order (simulated fills)
+// ---------- NEW: balances ----------
+app.get('/api/balances', auth, async (req, res) => {
+  const rows = await query(`
+    SELECT a.symbol, w.balance
+      FROM wallets w JOIN assets a ON a.id=w.asset_id
+     WHERE w.user_id=?`, [req.user.id]);
+  const balances = { USD: 0 };
+  rows.forEach(r => { balances[r.symbol] = Number(r.balance || 0); });
+  res.json({ balances });
+});
+
+// ---------- place order (legacy example) ----------
 app.post('/api/orders', auth, async (req, res) => {
   const { symbol, side, type, qty, price } = req.body || {};
   if (!symbol || !side || !type || !qty) return res.status(400).json({ message: 'missing fields' });
@@ -255,9 +259,9 @@ app.post('/api/orders', auth, async (req, res) => {
 
   const last = getSymbolPrice(symbol);
   const willFill =
-    type === 'MARKET' ||
-    (side === 'BUY'  && price != null && last <= price) ||
-    (side === 'SELL' && price != null && last >= price);
+    String(type).toUpperCase() === 'MARKET' ||
+    (String(side).toUpperCase() === 'BUY'  && price != null && last <= price) ||
+    (String(side).toUpperCase() === 'SELL' && price != null && last >= price);
 
   if (willFill) {
     await exec(`
@@ -268,9 +272,163 @@ app.post('/api/orders', auth, async (req, res) => {
     await exec('UPDATE orders SET status=? WHERE id=?', ['FILLED', orderId]);
 
     const base = symbol.split('-')[0];
-    await upsertWallet(req.user.id, base, side === 'BUY' ? qty : -qty);
+    await upsertWallet(req.user.id, base, String(side).toUpperCase() === 'BUY' ? qty : -qty);
   }
   res.json({ id: orderId, status: willFill ? 'FILLED' : 'NEW' });
+});
+
+// ---------- NEW: spot trade endpoint used by Trade page ----------
+app.post('/api/trades/spot', auth, async (req, res) => {
+  try {
+    const { side, symbol, type = 'MARKET', qty } = req.body || {};
+    if (!symbol || !qty || !side) return res.status(400).json({ error: 'symbol/side/qty required' });
+    if (!/^[A-Z]+-USD$/.test(symbol)) return res.status(400).json({ error: 'symbol must be like BTC-USD' });
+
+    const base = symbol.split('-')[0];
+    if (String(side).toUpperCase() === 'SELL') {
+      const bal = await getWalletBalance(req.user.id, base);
+      if (Number(bal) < Number(qty)) return res.status(400).json({ error: 'insufficient balance' });
+    }
+
+    const px = getSymbolPrice(symbol) || 0;
+    if (!px) return res.status(400).json({ error: `no price for ${symbol}` });
+
+    const ord = await exec(
+      `INSERT INTO orders(user_id,symbol,side,type,qty,price,status,created_at)
+       VALUES (?,?,?,?,?, ?, 'FILLED', CURRENT_TIMESTAMP)`,
+      [req.user.id, symbol, String(side).toUpperCase(), String(type).toUpperCase(), qty, px]
+    );
+    const orderId = ord.insertId;
+    await exec(
+      `INSERT INTO trades(order_id,user_id,symbol,price,qty,created_at)
+       VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)`,
+      [orderId, req.user.id, symbol, px, qty]
+    );
+    await upsertWallet(req.user.id, base, String(side).toUpperCase() === 'BUY' ? qty : -qty);
+
+    // send receipt email (log results)
+    try {
+      const u = await getUserBasic(req.user.id);
+      if (u && u.email) {
+        if (String(side).toUpperCase() === 'BUY') {
+          const resMail = await sendBuyEmail(u.email, {
+            firstName: u.firstName || 'Trader',
+            symbol,
+            qty: Number(qty),
+            price: Number(px),
+            amountUsd: Number(qty) * Number(px),
+            orderId
+          });
+          console.log('[mail] BUY receipt ->', u.email, resMail);
+        } else {
+          const gross = Number(qty) * Number(px);
+          const fee = gross * 0.001;
+          const resMail = await sendSellEmail(u.email, {
+            firstName: u.firstName || 'Trader',
+            symbol,
+            qty: Number(qty),
+            price: Number(px),
+            proceedsUsd: gross - fee,
+            feeUsd: fee,
+            orderId
+          });
+          console.log('[mail] SELL receipt ->', u.email, resMail);
+        }
+      } else {
+        console.warn('[mail] user email missing for receipt');
+      }
+    } catch (e) {
+      console.warn('[mail] spot trade email exception:', e?.message || e);
+    }
+
+    res.json({ ok: true, orderId, filledQty: qty, price: px });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------- NEW: coin-to-coin exchange ----------
+app.post('/api/trades/exchange', auth, async (req, res) => {
+  try {
+    const { from, to, amount, maxSlippagePct = 0 } = req.body || {};
+    if (!from || !to || !amount) return res.status(400).json({ error: 'from/to/amount required' });
+    if (from === to) return res.status(400).json({ error: 'from and to must differ' });
+
+    const balFrom = await getWalletBalance(req.user.id, from);
+    if (Number(balFrom) < Number(amount)) return res.status(400).json({ error: 'insufficient balance' });
+
+    const pFrom = getSymbolPrice(`${from}-USD`);
+    const pTo   = getSymbolPrice(`${to}-USD`);
+    if (!pFrom || !pTo) return res.status(400).json({ error: 'missing price' });
+
+    // fees/slippage
+    const feeUsd = Number(amount) * pFrom * 0.001; // 0.10%
+    const grossUsd = Number(amount) * pFrom;
+    const netUsd = Math.max(grossUsd - feeUsd, 0);
+    const minOut = netUsd * (1 - Number(maxSlippagePct) / 100);
+    const qtyTo = +(minOut / pTo).toFixed(8);
+
+    // Record as a sell then a buy
+    const sellOrd = await exec(
+      `INSERT INTO orders(user_id,symbol,side,type,qty,price,status,created_at)
+       VALUES (?,?,?,?,?, ?, 'FILLED', CURRENT_TIMESTAMP)`,
+      [req.user.id, `${from}-USD`, 'SELL', 'MARKET', amount, pFrom]
+    );
+    await exec(
+      `INSERT INTO trades(order_id,user_id,symbol,price,qty,created_at)
+       VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)`,
+      [sellOrd.insertId, req.user.id, `${from}-USD`, pFrom, amount]
+    );
+
+    const buyOrd = await exec(
+      `INSERT INTO orders(user_id,symbol,side,type,qty,price,status,created_at)
+       VALUES (?,?,?,?,?, ?, 'FILLED', CURRENT_TIMESTAMP)`,
+      [req.user.id, `${to}-USD`, 'BUY', 'MARKET', qtyTo, pTo]
+    );
+    await exec(
+      `INSERT INTO trades(order_id,user_id,symbol,price,qty,created_at)
+       VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)`,
+      [buyOrd.insertId, req.user.id, `${to}-USD`, pTo, qtyTo]
+    );
+
+    // wallets
+    await upsertWallet(req.user.id, from, -Number(amount));
+    await upsertWallet(req.user.id, to, Number(qtyTo));
+
+    // exchange receipt (log results)
+    try {
+      const u = await getUserBasic(req.user.id);
+      if (u && u.email) {
+        const resMail = await sendExchangeEmail(u.email, {
+          firstName: u.firstName || 'Trader',
+          from, to,
+          amountFrom: Number(amount),
+          amountTo: Number(qtyTo),
+          priceFrom: Number(pFrom),
+          priceTo: Number(pTo),
+          feeUsd: Number(feeUsd),
+          sellOrderId: sellOrd.insertId,
+          buyOrderId: buyOrd.insertId,
+        });
+        console.log('[mail] EXCHANGE receipt ->', u.email, resMail);
+      } else {
+        console.warn('[mail] user email missing for exchange receipt');
+      }
+    } catch (e) {
+      console.warn('[mail] exchange email exception:', e?.message || e);
+    }
+
+    res.json({
+      ok: true,
+      from, to,
+      filledFrom: Number(amount),
+      filledTo: qtyTo,
+      priceFrom: pFrom, priceTo: pTo,
+      feeUsd: +feeUsd.toFixed(2)
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ---------- Stripe ----------
@@ -415,11 +573,11 @@ ${JSON.stringify(body, null, 2)}
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ---------- wallet & price helpers (atomic) ----------
+// ---------- wallet & price helpers ----------
 async function upsertWallet(userId, baseSymbol, delta) {
   const sym = baseSymbol.toUpperCase();
 
-  // Atomically get/create asset id (avoids ER_DUP_ENTRY)
+  // get/create asset id
   const ins = await exec(
     `INSERT INTO assets(symbol) VALUES (?)
      ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
@@ -427,7 +585,7 @@ async function upsertWallet(userId, baseSymbol, delta) {
   );
   const assetId = ins.insertId;
 
-  // Atomically create-or-increment the wallet row
+  // create-or-increment wallet row
   await exec(
     `INSERT INTO wallets(user_id, asset_id, balance)
      VALUES (?, ?, ?)
@@ -435,32 +593,15 @@ async function upsertWallet(userId, baseSymbol, delta) {
     [userId, assetId, delta]
   );
 }
-
-// receipts & fulfillment
-async function sendPurchaseReceiptEmail(toEmail, { symbol, qty, price, amountUsd, piId }) {
-  try {
-    if (!mailReady) { console.warn('[mail] not configured; skipping receipt'); return; }
-    const lines = [
-      `Thanks for your purchase on CryptoTradingX!`,
-      '',
-      `Payment Intent: ${piId}`,
-      `Symbol: ${symbol}`,
-      `Filled Qty: ${qty}`,
-      `Fill Price: $${price.toFixed(2)}`,
-      `Gross: $${amountUsd.toFixed(2)}`,
-      '',
-      `You can view this in your Orders & Portfolio pages.`,
-    ].join('\n');
-    await smtpTransporter.sendMail({
-      from: MAIL_FROM,
-      to: toEmail,
-      subject: `Your CryptoTradingX purchase: ${symbol}`,
-      text: lines,
-    });
-    console.log('[mail] receipt sent to', toEmail);
-  } catch (e) {
-    console.error('[email] receipt error', e);
-  }
+async function getWalletBalance(userId, baseSymbol) {
+  const rows = await query(`
+    SELECT w.balance
+      FROM wallets w
+      JOIN assets a ON a.id = w.asset_id
+     WHERE w.user_id=? AND a.symbol=?`,
+    [userId, baseSymbol.toUpperCase()]
+  );
+  return Number(rows[0]?.balance || 0);
 }
 
 // idempotency guard table (ensures PaymentIntent is processed once)
@@ -474,21 +615,17 @@ async function ensurePaymentGuardTable() {
 }
 ensurePaymentGuardTable().catch(e => console.error('ensurePaymentGuardTable error:', e));
 
-// Fulfillment (idempotent)
+// Fulfillment (idempotent) — called by webhook or /fulfill
 async function creditUserForPaymentIntent(pi) {
   if (!pi || pi.status !== 'succeeded') return;
 
-  // ---- Idempotency guard: only first insert proceeds ----
+  // idempotency guard
   const guard = await exec(
     `INSERT IGNORE INTO payments_processed (pi_id, processed_at)
      VALUES (?, NOW())`,
     [pi.id]
   );
-  if (guard.affectedRows === 0) {
-    // already processed by webhook or fallback
-    return;
-  }
-  // -------------------------------------------------------
+  if (guard.affectedRows === 0) return; // already processed
 
   const meta = pi.metadata || {};
   const userId = Number(meta.userId);
@@ -522,19 +659,42 @@ async function creditUserForPaymentIntent(pi) {
     [pi.id, userId, symbol, amountUsd]
   ).catch(() => {});
 
-  const toEmail =
-    pi.receipt_email ||
-    (pi.charges?.data?.[0]?.billing_details?.email) ||
-    null;
-  if (toEmail) {
-    await sendPurchaseReceiptEmail(toEmail, {
-      symbol, qty, price: lastPrice, amountUsd, piId: pi.id
-    });
+  // Send buy receipt (log results)
+  try {
+    const u = await getUserBasic(userId);
+    const toEmail =
+      pi.receipt_email ||
+      (pi.charges?.data?.[0]?.billing_details?.email) ||
+      u?.email || null;
+    if (toEmail) {
+      const resMail = await sendBuyEmail(toEmail, {
+        firstName: u?.firstName || 'Trader',
+        symbol,
+        qty,
+        price: lastPrice,
+        amountUsd,
+        orderId,
+        paymentIntentId: pi.id,
+      });
+      console.log('[mail] BUY receipt (Stripe) ->', toEmail, resMail);
+    } else {
+      console.warn('[mail] no recipient email found for Stripe receipt');
+    }
+  } catch (e) {
+    console.warn('[mail] buy receipt (Stripe) failed:', e?.message || e);
   }
 }
 
 // ---------- price sim + ws ----------
-const prices = { 'BTC-USD': 30000, 'ETH-USD': 2000, 'BNB-USD': 400, 'LTC-USD': 75, 'XRP-USD': 0.6 };
+const prices = {
+  'BTC-USD': 30000,
+  'ETH-USD': 2000,
+  'BNB-USD': 400,
+  'LTC-USD': 75,
+  'XRP-USD': 0.6,
+  'SOL-USD': 150,
+  'USDT-USD': 1
+};
 function getSymbolPrice(sym) { return prices[sym] || 0; }
 
 let server;

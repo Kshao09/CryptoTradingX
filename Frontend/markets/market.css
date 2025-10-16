@@ -1,7 +1,10 @@
 /* Minimal page-specific overrides for markets */
 .search-wrap{ margin:8px 0 16px 0 }
 .table-wrap{ max-height: calc(100vh - 260px); overflow:auto }
-.market-status{ display:none !important }
+
+/* FIX: the status element in HTML uses id="marketStatus" */
+#marketStatus{ display:none !important }
+
 .table-markets tbody tr{ cursor:pointer }
 .table-markets tbody tr:hover{ background: rgba(255,255,255,0.02) }
 
