@@ -1,3 +1,8 @@
+const CONFIG = Object.assign(
+  { API_BASE_URL: "", WS_URL: "", DEMO: true },   // sensible defaults
+  window.CONFIG || {}
+);
+
 // --- UTILITIES ---
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
@@ -169,17 +174,11 @@ async function withBackoff(task, { maxAttempts=5, baseMs=600 } = {}){
   }
 }
 
-$('#simulateQuota').addEventListener('click', async () => {
+$('#simulateQuota')?.addEventListener('click', async () => {
   try{
     await withBackoff(simulateApiCall, { maxAttempts:5, baseMs:700 });
     showToast('Request succeeded after backoff','info');
   }catch{}
-});
-
-// Copy cURL helper
-$('#copyCurl').addEventListener('click', () => {
-  const curl = `curl -s ${CONFIG.API_BASE_URL}/health | jq`;
-  navigator.clipboard.writeText(curl).then(()=> showToast('cURL copied to clipboard')).catch(()=> showToast('Copy failed','error'));
 });
 
 // Smooth scroll for in-page anchors

@@ -7,12 +7,21 @@
 </head>
 <body>
   <script>
-    // Simple client router
-    const t = localStorage.getItem('token');
-    location.replace(t ? 'markets/market.html' : 'auth/auth.html');
+    (function () {
+      try {
+        const token = localStorage.getItem('token');
+        // With a token -> app; without -> landing
+        const dest = token ? '/markets/market.html' : '/landing/landing.html';
+        location.replace(dest);
+      } catch {
+        // If localStorage is blocked, still go to landing
+        location.replace('/landing/landing.html');
+      }
+    })();
   </script>
   <noscript>
-    JavaScript is required. Go to <a href="auth/auth.html">Sign in</a>.
+    JavaScript is required. Go to <a href="/landing/landing.html">Landing</a>
+    or <a href="/auth/auth.html">Sign in</a>.
   </noscript>
 </body>
 </html>

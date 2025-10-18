@@ -1,5 +1,4 @@
 /* utils.js — small helpers used across pages */
-
 (function () {
   const CFG = (window.CONFIG || {});
 
@@ -8,10 +7,7 @@
   }
 
   function setToken(t) {
-    try {
-      if (t) localStorage.setItem("token", t);
-      else localStorage.removeItem("token");
-    } catch {}
+    try { t ? localStorage.setItem("token", t) : localStorage.removeItem("token"); } catch {}
   }
 
   async function api(path, opts = {}) {
@@ -19,7 +15,6 @@
     const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
     const res = await fetch(url, Object.assign({}, opts, { headers }));
     if (!res.ok) {
-      // Try to extract a clear error
       let msg = res.statusText;
       try {
         const data = await res.json();
@@ -29,7 +24,6 @@
       }
       throw new Error(msg || `HTTP ${res.status}`);
     }
-    // No content
     if (res.status === 204) return null;
     return res.json();
   }
@@ -46,10 +40,9 @@
     } catch (e) {
       const msg = (e && e.message) ? e.message : String(e);
       if (/unauthorized|no token|invalid token|401/i.test(msg)) {
-        // Back to login if auth fails
         try { localStorage.removeItem("token"); } catch {}
-        // Adjust this path to your auth page if different
-        window.location.replace("../landing/landing.html");
+        // Use an absolute path so it works from any subfolder:
+        window.location.replace("/landing/landing.html");
       }
       throw e;
     }

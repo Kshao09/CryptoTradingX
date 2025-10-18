@@ -6,7 +6,6 @@
   <title>CryptoTradingX — Lightning-Fast Crypto Trading</title>
   <meta name="description" content="CryptoTradingX: lightning-fast crypto trading with live WebSocket prices, quota-smart API usage, and Stripe-ready onboarding." />
   <meta name="theme-color" content="#0ea5e9" />
-  <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="landing.css" />
 </head>
 <body>
@@ -59,7 +58,6 @@
             </div>
             <canvas id="chart" width="800" height="220"></canvas>
           </div>
-          <small style="display:block; color:#9cb3da; margin-top:10px">Tip: Toggle <strong>Demo Mode</strong> to connect your own <code>/health</code> and WebSocket endpoints later.</small>
         </div>
       </div>
     </section>
@@ -148,10 +146,6 @@
           <div style="margin-top:8px; color:#c9d9ff">Set <code>CONFIG.DEMO=false</code> and provide <code>CONFIG.WS_URL</code> to your server (e.g., <code>wss://api.cryptotradingx.com/quotes</code>). This page auto-switches to live updates.</div>
         </details>
         <details>
-          <summary>Where does the health check go?</summary>
-          <div style="margin-top:8px; color:#c9d9ff">Point <code>CONFIG.API_BASE_URL</code> at your backend and expose <code>/health</code> returning JSON: <code>{ ws: 'ok', redis: 'ok', stripe: 'ok', openai: 'ok' }</code>.</div>
-        </details>
-        <details>
           <summary>How do you avoid API quota issues?</summary>
           <div style="margin-top:8px; color:#c9d9ff">We cache hot routes in Redis and batch requests. On client errors (429), we use exponential backoff and user-visible toasts so sessions degrade gracefully.</div>
         </details>
@@ -173,7 +167,7 @@
     </div>
   </footer>
 
-  <script src="landing.js"></script>
-  <script src="app.js"></script>
+  <script defer src="../config.js"></script>
+  <script defer src="landing.js"></script>  
 </body>
 </html>
