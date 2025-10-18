@@ -109,7 +109,7 @@
               <li>Community support</li>
               <li>Basic charts</li>
             </ul>
-            <a class="btn" href="#get-started">Get Started</a>
+            <a class="btn" href="/auth/auth.html">Get Started</a>
           </div>
           <div class="price" style="border-color:#1f3b5f; background:linear-gradient(180deg, rgba(14,165,233,.15), rgba(14,165,233,.05))">
             <span class="tag">Pro</span>
@@ -120,7 +120,7 @@
               <li>Priority API pool</li>
               <li>1M cached requests</li>
             </ul>
-            <a class="btn" href="#get-started">Upgrade</a>
+            <a class="btn" href="/auth/auth.html">Upgrade</a>
           </div>
           <div class="price">
             <span class="tag">Enterprise</span>
@@ -131,7 +131,7 @@
               <li>Private endpoints</li>
               <li>White-glove onboarding</li>
             </ul>
-            <a class="btn" href="#get-started">Contact Sales</a>
+            <a class="btn" href="/auth/auth.html">Contact Sales</a>
           </div>
         </div>
       </div>
@@ -140,19 +140,16 @@
     <section class="section" id="faq">
       <div class="container">
         <h2>Frequently Asked Questions</h2>
-        <p class="lead">Everything you need to know before you connect your keys.</p>
-        <details>
-          <summary>How do I connect the real WebSocket feed?</summary>
-          <div style="margin-top:8px; color:#c9d9ff">Set <code>CONFIG.DEMO=false</code> and provide <code>CONFIG.WS_URL</code> to your server (e.g., <code>wss://api.cryptotradingx.com/quotes</code>). This page auto-switches to live updates.</div>
-        </details>
-        <details>
-          <summary>How do you avoid API quota issues?</summary>
-          <div style="margin-top:8px; color:#c9d9ff">We cache hot routes in Redis and batch requests. On client errors (429), we use exponential backoff and user-visible toasts so sessions degrade gracefully.</div>
-        </details>
-        <details>
-          <summary>Stripe & OpenAI setup?</summary>
-          <div style="margin-top:8px; color:#c9d9ff">Use environment variables server-side: <code>STRIPE_SECRET_KEY</code> and <code>OPENAI_API_KEY</code>. Client never sees the secrets; this page only pings health status.</div>
-        </details>
+
+        <!-- The list will be rendered by landing.js -->
+        <div id="faqList" class="faq-list" role="list">
+          <!-- FAQ items inserted here -->
+        </div>
+
+        <!-- (Optional) small note -->
+        <p class="lead" style="color:#9fb3da; margin-top:16px">
+          Don’t see your question? <a href="/auth/auth.html">Contact us</a> or email support.
+        </p>
       </div>
     </section>
 
