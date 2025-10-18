@@ -4,7 +4,7 @@ const bc = new BroadcastChannel('ctx-sync');
 
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
   try { localStorage.removeItem('token'); } catch {}
-  location.replace('/auth/auth.html');
+  location.replace('/landing/landing.html');
 });
 
 const $ = (s) => document.querySelector(s);

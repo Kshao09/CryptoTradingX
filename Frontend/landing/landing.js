@@ -67,25 +67,90 @@ function drawChartFromSeries(series){
   ctx.lineWidth = 2.2; ctx.strokeStyle = '#38bdf8'; ctx.stroke();
 }
 
-function renderTicker(){
-  const wrap = $('#ticker'); if (!wrap) return;
-  wrap.innerHTML = '';
-  Object.entries(coins).forEach(([sym, info]) => {
-    const price = info.price, prev = info.prev ?? info.price, change = info.change24h;
-    const deltaPct = (typeof change === 'number') ? change : (price && prev ? ((price-prev)/prev)*100 : 0);
-    const el = document.createElement('div');
-    el.className = 'coin';
-    el.innerHTML = `
+/* Replace the old renderTicker with this orbit version */
+/* ==== circular belt renderer (replaces your old renderTicker) ==== */
+/* ==== Horizontal belt ticker ==== */
+let beltRAF = null;
+let beltOffset = 0;                 // current x offset (px)
+let beltWidth = 0;                  // width of one track (px)
+const BELT_SPEED_PX_S = 70;         // tweak scroll speed
+let _beltTrack = null, _beltClone = null;
+
+function buildChip(sym, info){
+  const price = info.price, prev = info.prev ?? info.price, change = info.change24h;
+  const deltaPct = (typeof change === 'number')
+    ? change
+    : (price && prev ? ((price - prev)/prev)*100 : 0);
+  return `
+    <div class="coin">
       <div class="left">
         <span class="badge">${sym}</span>
         <strong>${price==null ? '--' : `$${price.toLocaleString(undefined,{maximumFractionDigits:2})}`}</strong>
       </div>
-      <div class="delta ${deltaPct>=0 ? 'up' : 'down'}">${deltaPct>=0?'+':''}${(deltaPct||0).toFixed(2)}%</div>
-    `;
-    wrap.appendChild(el);
-  });
-  if (coins.BTC.price != null) $('#btcNow').textContent = `$${coins.BTC.price.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+      <div class="delta ${deltaPct>=0 ? 'up' : 'down'}">
+        ${deltaPct>=0?'+':''}${(deltaPct||0).toFixed(2)}%
+      </div>
+    </div>
+  `;
 }
+
+function measureBelt(){
+  // after content is set and in the DOM
+  beltWidth = _beltTrack ? _beltTrack.scrollWidth : 0;
+}
+
+function applyBeltTransforms(){
+  if (!_beltTrack || !_beltClone) return;
+  _beltTrack.style.transform = `translateX(${beltOffset}px)`;
+  _beltClone.style.transform = `translateX(${beltOffset + beltWidth}px)`;
+}
+
+function startBelt(){
+  cancelAnimationFrame(beltRAF);
+  let last = performance.now();
+  function tick(now){
+    const dt = (now - last) / 1000; last = now;
+    beltOffset -= BELT_SPEED_PX_S * dt;
+    if (-beltOffset >= beltWidth && beltWidth > 0) {
+      beltOffset += beltWidth; // wrap seamlessly
+    }
+    applyBeltTransforms();
+    beltRAF = requestAnimationFrame(tick);
+  }
+  beltRAF = requestAnimationFrame(tick);
+}
+
+function renderTicker(){
+  _beltTrack = _beltTrack || document.getElementById('beltTrack');
+  _beltClone = _beltClone || document.getElementById('beltTrackClone');
+  if (!_beltTrack || !_beltClone) return;
+
+  const ids = Object.keys(coins);   // e.g., ["BTC","ETH","SOL"]
+  const html = ids.map(sym => buildChip(sym, coins[sym])).join('');
+  const currentOffset = beltOffset; // preserve motion across renders
+
+  _beltTrack.innerHTML = html;
+  _beltClone.innerHTML = html;
+
+  // measure after DOM paints to get correct width
+  requestAnimationFrame(() => {
+    measureBelt();
+    beltOffset = currentOffset; // resume from previous position
+    applyBeltTransforms();
+  });
+
+  // keep the separate BTC badge near the chart updated
+  if (coins.BTC?.price != null) {
+    const b = document.getElementById('btcNow');
+    if (b) b.textContent = `$${coins.BTC.price.toLocaleString(undefined,{maximumFractionDigits:2})}`;
+  }
+}
+
+// keep belt width correct on resize
+window.addEventListener('resize', () => {
+  requestAnimationFrame(() => { measureBelt(); applyBeltTransforms(); });
+});
+
 
 // Fetch snapshot for BTC/ETH/SOL
 async function fetchCGSnapshot(){
@@ -344,6 +409,7 @@ function init(){
   else { connectWS(); }                    // Live = your WS
   healthCheck();
   renderTicker();
+  startBelt();
   if (chartPrices?.length) drawChartFromSeries(chartPrices);
 }
 demoToggle?.addEventListener('click', () => {

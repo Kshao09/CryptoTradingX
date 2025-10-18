@@ -115,3 +115,54 @@ footer{border-top:1px solid var(--border); padding:28px 0; color:#a7b6d7}
   .statusbar{grid-template-columns: 1fr 1fr}
   .ticker{grid-template-columns: 1fr}
 }
+
+/* Circular belt: JS animates rotation */
+.orbit-wrap{ display:flex; justify-content:center; align-items:center; padding:10px 0; }
+.orbit{ position:relative; width:280px; height:280px; margin:auto; }
+.orbit::before{ content:""; position:absolute; inset:0; border-radius:50%; border:1px solid rgba(148,163,184,.18); }
+
+/* no keyframes here; JS sets transform on .ring every frame */
+.orbit .ring{ position:absolute; inset:0; will-change: transform; }
+
+.orbit .node{ position:absolute; left:50%; top:50%; transform-origin:center center; }
+.orbit .coin{
+  display:flex; align-items:center; gap:10px;
+  background: rgba(148,163,184,.08);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.2);
+  white-space: nowrap;
+}
+.orbit .coin .badge{
+  background:#0b1220; border:1px solid var(--border);
+  padding:3px 6px; border-radius:999px; font-size:.8rem; color:#9fb3da;
+}
+.orbit .coin strong{ font-weight:800; color:#e5eeff }
+.orbit .delta.up{ color:#22c55e }
+.orbit .delta.down{ color:#ef4444 }
+
+/* === Horizontal belt ticker (infinite loop) === */
+.belt { position: relative; overflow: hidden; height: 64px; padding: 6px 0; }
+.belt-track {
+  position: absolute; left: 0; top: 0;
+  display: flex; align-items: center; gap: 16px;
+  will-change: transform;
+}
+
+.belt .coin {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(148,163,184,.08);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.2);
+  white-space: nowrap;
+}
+.belt .coin .badge{
+  background:#0b1220; border:1px solid var(--border);
+  padding:3px 6px; border-radius:999px; font-size:.8rem; color:#9fb3da;
+}
+.belt .coin strong{ font-weight:800; color:#e5eeff }
+.belt .delta.up{ color:#22c55e }
+.belt .delta.down{ color:#ef4444 }

@@ -9,7 +9,7 @@ const fmtUSD = (n) =>
 
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
   try { localStorage.removeItem('token'); } catch {}
-  location.href = '/auth/auth.html';
+  location.href = '/landing/landing.html';
 });
 
 (async function init() {

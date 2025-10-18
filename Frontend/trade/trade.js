@@ -24,7 +24,7 @@ function setActiveTab(btn) {
 // auth/logout
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
   try { localStorage.removeItem('token'); } catch {}
-  location.replace('/auth/auth.html');
+  location.replace('/landing/landing.html');
 });
 
 // tab switching
