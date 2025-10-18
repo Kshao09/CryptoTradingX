@@ -36,7 +36,7 @@ async function ensureChartJsLoaded(){
 /* ---------- Auth gate ---------- */
 const token = localStorage.getItem('token');
 if (!token) {
-  window.location.replace('/');
+  window.location.replace('/landing/landing.html');
 }
 
 /* ---------- Tab / view switching ---------- */
@@ -53,7 +53,11 @@ tabButtons.forEach(b => b.addEventListener('click', () => switchViewTo(b.dataset
 switchViewTo(document.querySelector('.tabs .tab.active')?.dataset.view || 'markets');
 
 /* ---------- Logout ---------- */
-$('#logoutBtn')?.addEventListener('click', () => { localStorage.removeItem('token'); window.location.replace('/'); });
+// On logout, go back to landing
+$('#logoutBtn')?.addEventListener('click', () => {
+  localStorage.removeItem('token');
+  window.location.replace('/landing/landing.html');
+});
 
 /* ---------- Live updates from Trade page (Buy/Sell/Exchange) ---------- */
 // trade.js posts 'balances-updated' and 'orders-updated' on this channel

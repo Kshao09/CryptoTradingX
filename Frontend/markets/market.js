@@ -256,7 +256,7 @@
     });
   });
 
-  document.getElementById('logoutBtn')?.addEventListener('click', ()=>{ localStorage.removeItem('token'); location.replace('../auth/auth.html'); });
+  document.getElementById('logoutBtn')?.addEventListener('click', ()=>{ localStorage.removeItem('token'); location.replace('/auth/auth.html'); });
 
   // restore any saved filter/sort/search state
   loadViewState();

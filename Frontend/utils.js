@@ -49,7 +49,7 @@
         // Back to login if auth fails
         try { localStorage.removeItem("token"); } catch {}
         // Adjust this path to your auth page if different
-        window.location.replace("../auth/auth.html");
+        window.location.replace("../landing/landing.html");
       }
       throw e;
     }

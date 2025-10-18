@@ -7,6 +7,7 @@
   <meta name="description" content="CryptoTradingX: lightning-fast crypto trading with live WebSocket prices, quota-smart API usage, and Stripe-ready onboarding." />
   <meta name="theme-color" content="#0ea5e9" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="landing.css" />
 </head>
 <body>
   <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="true"></div>
@@ -22,7 +23,7 @@
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
         <button class="toggle" id="demoToggle" title="Toggle Demo Mode">Demo Mode: <strong id="demoState">ON</strong></button>
-        <a class="btn" href="#get-started">Get Started</a>
+        <a class="btn" href="/auth/auth.html">Get Started</a>
       </nav>
     </div>
   </header>
@@ -34,9 +35,7 @@
           <h1 class="title">Lightning-Fast Crypto Trading,<br/>Quota-Smart by Design.</h1>
           <p class="subtitle">Live WebSocket prices, Redis-assisted caching to reduce API calls, Stripe-ready checkout, and AI insights — all wired for reliability so you never hit <em>“API quota exceeded”</em> at crunch time.</p>
           <div class="cta">
-            <a href="#get-started" class="primary" id="cta-primary">Launch Web App</a>
-            <button class="ghost" id="simulateQuota">Simulate “Quota Exceeded”</button>
-            <button class="ghost" id="copyCurl">Copy health check cURL</button>
+            <a href="/auth/auth.html" class="primary" id="cta-primary">Launch Web App</a>
           </div>
 
           <div class="panel" style="margin-top:16px">
@@ -163,22 +162,6 @@
       </div>
     </section>
 
-    <section class="section" id="get-started">
-      <div class="container">
-        <h2>Get Started Today</h2>
-        <p class="lead">Drop these files into your <code>Frontend/</code> or <code>public/</code> folder, update the config in <code>app.js</code>, and deploy.</p>
-        <div class="card">
-<pre style="white-space:pre-wrap; word-break:break-word; margin:0; color:#cfe0ff"><code>// Edit these values in app.js:
-const CONFIG = { 
-  API_BASE_URL: 'http://localhost:3001',
-  WS_URL: 'ws://localhost:3001/quotes',
-  DEMO: true // set false to hit your backend
-};</code></pre>
-        </div>
-      </div>
-    </section>
-  </main>
-
   <footer>
     <div class="container" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap">
       <div>© <span id="year"></span> CryptoTradingX. All rights reserved.</div>
@@ -190,6 +173,7 @@ const CONFIG = {
     </div>
   </footer>
 
+  <script src="landing.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
