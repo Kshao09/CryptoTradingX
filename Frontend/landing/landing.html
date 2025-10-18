@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CryptoTradingX — Lightning-Fast Crypto Trading</title>
+  <meta name="description" content="CryptoTradingX: lightning-fast crypto trading with live WebSocket prices, quota-smart API usage, and Stripe-ready onboarding." />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="CryptoTradingX home">
+        <span class="logo" aria-hidden="true">💠</span>
+        <span>CryptoTradingX</span>
+      </a>
+      <nav class="navlinks" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+        <button class="toggle" id="demoToggle" title="Toggle Demo Mode">Demo Mode: <strong id="demoState">ON</strong></button>
+        <a class="btn" href="#get-started">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <h1 class="title">Lightning-Fast Crypto Trading,<br/>Quota-Smart by Design.</h1>
+          <p class="subtitle">Live WebSocket prices, Redis-assisted caching to reduce API calls, Stripe-ready checkout, and AI insights — all wired for reliability so you never hit <em>“API quota exceeded”</em> at crunch time.</p>
+          <div class="cta">
+            <a href="#get-started" class="primary" id="cta-primary">Launch Web App</a>
+            <button class="ghost" id="simulateQuota">Simulate “Quota Exceeded”</button>
+            <button class="ghost" id="copyCurl">Copy health check cURL</button>
+          </div>
+
+          <div class="panel" style="margin-top:16px">
+            <div class="ticker" id="ticker" aria-live="polite">
+              <!-- Dynamic coins inserted here -->
+            </div>
+            <div class="statusbar" role="status" aria-live="polite">
+              <div class="status"><span class="dot ok" id="s-ws"></span> WS Feed</div>
+              <div class="status"><span class="dot ok" id="s-redis"></span> Redis Cache</div>
+              <div class="status"><span class="dot ok" id="s-stripe"></span> Stripe</div>
+              <div class="status"><span class="dot ok" id="s-openai"></span> OpenAI</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="chart-wrap" aria-label="BTC/USDT price chart">
+            <div class="chart-head">
+              <div class="pair">BTC/USDT <span class="badge" id="btcNow">$—</span></div>
+              <div class="chip" id="chartHint">Live demo feed</div>
+            </div>
+            <canvas id="chart" width="800" height="220"></canvas>
+          </div>
+          <small style="display:block; color:#9cb3da; margin-top:10px">Tip: Toggle <strong>Demo Mode</strong> to connect your own <code>/health</code> and WebSocket endpoints later.</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <h2>Purpose-Built for Speed & Resilience</h2>
+        <p class="lead">We designed CryptoTradingX around low-latency execution and quota-smart architecture inspired by our API troubleshooting sessions.</p>
+        <div class="grid" role="list">
+          <article class="card" role="listitem">
+            <h3>Live WebSocket Engine</h3>
+            <p>Streaming quotes with fallback to local simulation. When a feed blips, we auto-reconnect — no frozen tickers.</p>
+          </article>
+          <article class="card" role="listitem">
+            <h3>Redis-Assisted Caching</h3>
+            <p>Cache hot endpoints server-side to slash provider calls and avoid hitting plan limits during traffic spikes.</p>
+          </article>
+          <article class="card" role="listitem">
+            <h3>Stripe-Ready Onboarding</h3>
+            <p>Plan tiers mapped to Stripe products. Fail gracefully with idempotent retries on webhooks & checkout.</p>
+          </article>
+          <article class="card" role="listitem">
+            <h3>AI Insight Modules</h3>
+            <p>Plug in OpenAI for summaries and alerts. If a key is invalid or revoked, our UI surfaces it fast with guidance.</p>
+          </article>
+          <article class="card" role="listitem">
+            <h3>Error-First UX</h3>
+            <p>Clear toasts and an exponential backoff when 429s appear — so users know what’s happening and when.</p>
+          </article>
+          <article class="card" role="listitem">
+            <h3>Secure by Default</h3>
+            <p>JWT-based auth, rate-limiters, and safe defaults. Works great with your Node/Express + Redis stack.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pricing">
+      <div class="container">
+        <h2>Simple, Scalable Pricing</h2>
+        <p class="lead">Start free, then scale as your trading grows. All plans include WebSockets and caching.</p>
+        <div class="pricing">
+          <div class="price">
+            <span class="tag">Starter</span>
+            <div class="big">$0</div>
+            <small style="color:#9fb3da">/ mo</small>
+            <ul>
+              <li>Mock prices & demo mode</li>
+              <li>Community support</li>
+              <li>Basic charts</li>
+            </ul>
+            <a class="btn" href="#get-started">Get Started</a>
+          </div>
+          <div class="price" style="border-color:#1f3b5f; background:linear-gradient(180deg, rgba(14,165,233,.15), rgba(14,165,233,.05))">
+            <span class="tag">Pro</span>
+            <div class="big">$29</div>
+            <small style="color:#9fb3da">/ mo</small>
+            <ul>
+              <li>Live exchange feed</li>
+              <li>Priority API pool</li>
+              <li>1M cached requests</li>
+            </ul>
+            <a class="btn" href="#get-started">Upgrade</a>
+          </div>
+          <div class="price">
+            <span class="tag">Enterprise</span>
+            <div class="big">Custom</div>
+            <small style="color:#9fb3da">—</small>
+            <ul>
+              <li>Dedicated quota & SLAs</li>
+              <li>Private endpoints</li>
+              <li>White-glove onboarding</li>
+            </ul>
+            <a class="btn" href="#get-started">Contact Sales</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container">
+        <h2>Frequently Asked Questions</h2>
+        <p class="lead">Everything you need to know before you connect your keys.</p>
+        <details>
+          <summary>How do I connect the real WebSocket feed?</summary>
+          <div style="margin-top:8px; color:#c9d9ff">Set <code>CONFIG.DEMO=false</code> and provide <code>CONFIG.WS_URL</code> to your server (e.g., <code>wss://api.cryptotradingx.com/quotes</code>). This page auto-switches to live updates.</div>
+        </details>
+        <details>
+          <summary>Where does the health check go?</summary>
+          <div style="margin-top:8px; color:#c9d9ff">Point <code>CONFIG.API_BASE_URL</code> at your backend and expose <code>/health</code> returning JSON: <code>{ ws: 'ok', redis: 'ok', stripe: 'ok', openai: 'ok' }</code>.</div>
+        </details>
+        <details>
+          <summary>How do you avoid API quota issues?</summary>
+          <div style="margin-top:8px; color:#c9d9ff">We cache hot routes in Redis and batch requests. On client errors (429), we use exponential backoff and user-visible toasts so sessions degrade gracefully.</div>
+        </details>
+        <details>
+          <summary>Stripe & OpenAI setup?</summary>
+          <div style="margin-top:8px; color:#c9d9ff">Use environment variables server-side: <code>STRIPE_SECRET_KEY</code> and <code>OPENAI_API_KEY</code>. Client never sees the secrets; this page only pings health status.</div>
+        </details>
+      </div>
+    </section>
+
+    <section class="section" id="get-started">
+      <div class="container">
+        <h2>Get Started Today</h2>
+        <p class="lead">Drop these files into your <code>Frontend/</code> or <code>public/</code> folder, update the config in <code>app.js</code>, and deploy.</p>
+        <div class="card">
+<pre style="white-space:pre-wrap; word-break:break-word; margin:0; color:#cfe0ff"><code>// Edit these values in app.js:
+const CONFIG = { 
+  API_BASE_URL: 'http://localhost:3001',
+  WS_URL: 'ws://localhost:3001/quotes',
+  DEMO: true // set false to hit your backend
+};</code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap">
+      <div>© <span id="year"></span> CryptoTradingX. All rights reserved.</div>
+      <div style="display:flex; gap:14px">
+        <a href="#" style="color:#9fb3da">Privacy</a>
+        <a href="#" style="color:#9fb3da">Terms</a>
+        <a href="#top" style="color:#9fb3da">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

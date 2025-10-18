@@ -1,0 +1,117 @@
+:root{
+  --bg: #0b0f17; /* dark graphite */
+  --panel: #101726; /* card bg */
+  --muted: #7b8aa8; /* muted text */
+  --text: #e6f1ff; /* main text */
+  --brand: #0ea5e9; /* cyan */
+  --accent: #22c55e; /* green */
+  --warn: #f59e0b; /* amber */
+  --err: #ef4444; /* red */
+  --ok: #10b981; /* emerald */
+  --border: #1e293b; /* slate */
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --radius-xl: 20px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+  --maxw: 1200px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  background: radial-gradient(1200px 600px at 80% -10%, rgba(14,165,233,.12), transparent 60%),
+              radial-gradient(900px 600px at 10% 10%, rgba(34,197,94,.10), transparent 60%),
+              var(--bg);
+  color:var(--text);
+  line-height:1.6;
+}
+a{color:inherit;text-decoration:none}
+.container{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+
+/* Header */
+header{
+  position:sticky; top:0; z-index:40; backdrop-filter: saturate(180%) blur(10px);
+  background: linear-gradient(180deg, rgba(11,15,23,.9), rgba(11,15,23,.75));
+  border-bottom:1px solid var(--border);
+}
+.nav{display:flex; align-items:center; justify-content:space-between; height:64px}
+.brand{display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.3px}
+.logo{width:28px; height:28px; display:grid; place-items:center; border-radius:9px; background:linear-gradient(135deg,var(--brand),#38bdf8); box-shadow: var(--shadow)}
+.nav a.btn{padding:10px 16px; background:linear-gradient(135deg,var(--brand),#38bdf8); color:#001018; font-weight:700; border-radius:12px; box-shadow: var(--shadow)}
+.navlinks{display:flex; gap:18px; align-items:center}
+.navlinks a{color:var(--muted)}
+.navlinks a:hover{color:#bcd2ff}
+.toggle{border:1px solid var(--border); padding:8px 12px; border-radius:10px; cursor:pointer}
+
+/* Hero */
+.hero{padding:72px 0 36px}
+.hero-grid{display:grid; grid-template-columns: 1.15fr .85fr; gap:28px; align-items:center}
+.title{font-size: clamp(28px, 5vw, 54px); line-height:1.05; margin:0 0 10px}
+.subtitle{font-size: clamp(16px, 2.8vw, 19px); color:#c9d9ff; opacity:.85; margin:0 0 20px}
+.cta{display:flex; gap:12px; flex-wrap:wrap}
+.cta .primary{background:linear-gradient(135deg,var(--accent),#34d399); color:#00150b; font-weight:800; border:none; padding:14px 18px; border-radius:12px; cursor:pointer}
+.cta .ghost{border:1px solid var(--border); color:#cfe5ff; padding:12px 16px; border-radius:12px; background:transparent; cursor:pointer}
+
+.panel{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+  border:1px solid var(--border); border-radius:var(--radius-xl); box-shadow: var(--shadow); padding:16px}
+
+/* Ticker */
+.ticker{display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin:18px 0}
+.coin{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1px solid var(--border); border-radius:12px; background: rgba(255,255,255,.02)}
+.coin .left{display:flex; gap:10px; align-items:center}
+.badge{font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:#b9c7e5}
+.delta.up{color:var(--ok)}
+.delta.down{color:var(--err)}
+
+/* Chart */
+.chart-wrap{position:relative; border:1px solid var(--border); border-radius:14px; overflow:hidden; background: #0d1422}
+canvas{display:block; width:100%; height:220px}
+.chart-head{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.0))}
+.chart-head .pair{font-weight:700}
+.chip{font-size:12px; padding:6px 8px; border:1px solid var(--border); border-radius:10px; color:#cce1ff}
+
+/* Status bar */
+.statusbar{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:12px}
+.status{display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background: rgba(255,255,255,.02)}
+.dot{width:8px;height:8px;border-radius:50%}
+.ok{background:var(--ok)}
+.warn{background:var(--warn)}
+.err{background:var(--err)}
+
+/* Features */
+.section{padding:60px 0}
+.section h2{font-size: clamp(24px, 4.5vw, 36px); margin:0 0 8px}
+.section p.lead{color:#c6d8ff; margin:0 0 24px}
+.grid{display:grid; grid-template-columns: repeat(3, 1fr); gap:16px}
+.card{padding:18px; border:1px solid var(--border); border-radius:16px; background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));}
+.card h3{margin:8px 0 6px}
+.card p{color:#c6d2ea; margin:0}
+
+/* Pricing */
+.pricing{display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top:8px}
+.price{padding:22px; border:1px solid var(--border); border-radius:18px; background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)); position:relative}
+.price .tag{position:absolute; top:12px; right:12px; font-size:12px; border:1px solid var(--border); padding:2px 8px; border-radius:999px; color:#b9c7e5}
+.big{font-size:38px; font-weight:800}
+ul{margin:12px 0 18px; padding-left:18px}
+
+/* FAQ */
+details{border:1px solid var(--border); padding:12px 14px; border-radius:12px; background: rgba(255,255,255,.02)}
+details+details{margin-top:10px}
+summary{cursor:pointer; font-weight:600}
+
+/* Footer */
+footer{border-top:1px solid var(--border); padding:28px 0; color:#a7b6d7}
+
+/* Toast */
+.toast-wrap{position: fixed; top:14px; right:14px; display:flex; flex-direction:column; gap:10px; z-index:50}
+.toast{padding:12px 14px; border-radius:12px; border:1px solid var(--border); background: #0f172a; box-shadow: var(--shadow); color:#dfe8ff; max-width: 360px}
+
+/* Responsive */
+@media (max-width: 980px){
+  .hero-grid{grid-template-columns: 1fr}
+  .grid{grid-template-columns: 1fr}
+  .pricing{grid-template-columns: 1fr}
+  .statusbar{grid-template-columns: 1fr 1fr}
+  .ticker{grid-template-columns: 1fr}
+}
