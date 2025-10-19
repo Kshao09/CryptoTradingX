@@ -17,7 +17,10 @@ const { ethers } = require('ethers');
 let openai = null;
 try {
   const { OpenAI } = require('openai');
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
 } catch { /* optional */ }
 
 const { query, exec } = require('./db');
@@ -539,38 +542,95 @@ app.get('/api/prices/:symbol', async (req, res) => {
 app.post('/api/ai/insights', auth, async (req, res) => {
   try {
     const body = req.body || {};
-    if (!Array.isArray(body.positions)) return res.status(400).json({ error: 'positions[] required' });
+    const positions = Array.isArray(body.positions) ? body.positions : [];
+    const cashUsd = Number(body.cashUsd || 0);
+    const riskTolerance = String(body.riskTolerance || 'medium');
+    const question = String(body.question || '').slice(0, 500);
 
-    if (!openai) {
-      const total = body.positions.reduce((s, p) => s + (p.qty * p.avgPrice), 0) + (body.cashUsd || 0);
-      const top = [...body.positions]
-        .sort((a, b) => b.qty * b.avgPrice - a.qty * a.avgPrice)
-        .slice(0, 3)
-        .map(p => p.symbol);
-      return res.json({
-        model: 'rule-based',
-        summary: `Total exposure ~ $${total.toFixed(2)}. Concentration in ${top.join(', ')}.`,
-        tips: [
-          'Cap any single position at ≤ 25% of portfolio.',
-          'Keep 6–12 months of cash runway.',
-          'Prefer limit orders; avoid chasing breakouts.',
-        ],
-      });
+    if (!positions.length) {
+      return res.status(400).json({ error: 'positions[] required' });
     }
 
-    const prompt = `
-You are a trading coach. User portfolio (USD):
-${JSON.stringify(body, null, 2)}
-1) 2–3 sentence overview of concentration and cash runway.
-2) 3 tactical suggestions (bullets).
-3) 2 risk controls (bullets). No guarantees.`;
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
+    // --- Rule-based fallback generator ---
+    function ruleBased() {
+      const rows = positions.map(p => ({
+        symbol: String(p.symbol || '???'),
+        qty: Number(p.qty || 0),
+        price: Number(p.avgPrice || 0),
+        value: Number(p.qty || 0) * Number(p.avgPrice || 0)
+      }));
+      const totalPos = rows.reduce((s, r) => s + r.value, 0);
+      const total = totalPos + cashUsd;
+      const sorted = rows.slice().sort((a,b)=>b.value-a.value);
+      const top3 = sorted.slice(0,3);
+      const topShare = total ? (top3.reduce((s,r)=>s+r.value,0)/total)*100 : 0;
+      const cashPct = total ? (cashUsd/total)*100 : 0;
+      const largest = sorted[0];
+
+      const summary = [
+        `Total account value ~ $${Math.round(total).toLocaleString()}.`,
+        largest ? `Largest position ${largest.symbol} is ~ ${((largest.value/Math.max(1,total))*100).toFixed(1)}%` : '',
+        top3.length > 1 ? `Top 3 holdings are ~ ${topShare.toFixed(1)}% of account.` : '',
+        `Cash buffer ~ ${cashPct.toFixed(1)}%.`
+      ].filter(Boolean).join(' ');
+
+      const tips = [];
+      if (largest && total && largest.value/total > 0.25) {
+        tips.push(`Consider trimming ${largest.symbol}; single-name exposure >25%.`);
+      }
+      if (cashPct < 2) tips.push('Keep a small cash buffer (2-5%) for fees and slippage.');
+      if (riskTolerance === 'low' && topShare > 60) tips.push('High concentration for low risk—consider broader diversification.');
+      if (riskTolerance === 'high' && cashPct > 15) tips.push('Cash is high vs. risk appetite—deploy in planned increments.');
+      if (question) tips.push('Answering your question with the context above. (Model unavailable; quick summary shown.)');
+
+      return { model:'rule', summary, tips };
+    }
+
+    // If no OpenAI client, return rule-based immediately
+    if (!openai) return res.json(ruleBased());
+
+    // Try OpenAI with a timeout; fall back on any error
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 10_000);
+
+    try {
+      const prompt = `
+You are a concise assistant for a crypto trading app.
+User question: ${question || '(no specific question)'}
+
+Portfolio:
+${JSON.stringify({ positions, cashUsd, riskTolerance }, null, 2)}
+
+Give a short, practical answer (4–8 sentences). Avoid personal financial advice; keep it educational.
+      `.trim();
+
+      const out = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.3,
+        messages: [{ role:'user', content: prompt }]
+      }, { signal: controller.signal });
+
+      clearTimeout(t);
+      const text = out?.choices?.[0]?.message?.content?.trim();
+      if (!text) return res.json({ ...ruleBased(), warning: 'ai_fallback' });
+      return res.json({ model:'openai', text });
+
+    } catch (err) {
+      clearTimeout(t);
+      // Any OpenAI error → graceful degrade
+      const rb = ruleBased();
+      return res.json({ ...rb, warning: 'ai_fallback' });
+    }
+
+  } catch (e) {
+    // Absolute last resort: still give something useful
+    return res.status(200).json({
+      model: 'rule',
+      summary: 'Unable to contact the AI service. Here is a quick summary generated locally.',
+      tips: ['Retry in a minute; provider may be rate-limited.', 'Your request was logged for diagnostics.'],
+      warning: 'ai_fallback'
     });
-    res.json({ model: 'gpt-4o-mini', text: completion.choices[0].message.content });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  }
 });
 
 // ---------- wallet & price helpers ----------

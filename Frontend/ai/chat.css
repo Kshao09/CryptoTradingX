@@ -1,0 +1,51 @@
+/* floating chat bubble */
+.ctx-chat-btn {
+  position: fixed; right: 18px; bottom: 18px; z-index: 9999;
+  width: 56px; height: 56px; border-radius: 999px;
+  display: grid; place-items: center; cursor: pointer;
+  border: 1px solid var(--border, #263244);
+  background: linear-gradient(180deg, rgba(148,163,184,.18), rgba(148,163,184,.08));
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 28px rgba(0,0,0,.35);
+  color: #e8f0ff; font-size: 22px;
+}
+.ctx-chat-btn:hover { transform: translateY(-1px); }
+
+.ctx-chat {
+  position: fixed; right: 18px; bottom: 84px; z-index: 9999;
+  width: min(420px, calc(100vw - 32px)); max-height: min(70vh, 640px);
+  display: none; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--border, #263244); border-radius: 16px;
+  background: rgba(11,18,32,.9); backdrop-filter: blur(8px);
+  box-shadow: 0 18px 48px rgba(0,0,0,.45);
+}
+.ctx-chat.open { display: flex; }
+
+.ctx-chat .hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid var(--border, #263244);
+}
+.ctx-chat .hd .t { font-weight: 700; }
+.ctx-chat .hd .x { border: 0; background: transparent; color: #9fb3da; font-size: 20px; cursor:pointer }
+
+.ctx-chat .msgs { padding: 10px 12px; overflow: auto; gap: 8px; display: flex; flex-direction: column; }
+.ctx-chat .m { max-width: 85%; padding: 10px 12px; border: 1px solid var(--border, #263244); border-radius: 12px; line-height: 1.35 }
+.ctx-chat .m.me { align-self: flex-end; background: rgba(56,189,248,.12) }
+.ctx-chat .m.bot{ align-self: flex-start; background: rgba(148,163,184,.10) }
+
+.ctx-chat .ft { padding: 8px; border-top:1px solid var(--border, #263244); display:flex; gap:8px }
+.ctx-chat .ft textarea {
+  flex:1; resize: none; height: 42px; max-height: 120px;
+  background: rgba(15,23,42,.65); color: #e8f0ff; border:1px solid #263244; border-radius:10px; padding:8px 10px;
+}
+.ctx-chat .ft button { padding: 0 12px; border-radius: 10px; border:1px solid #263244; background:#0ea5e9; color:#07121f; font-weight:700 }
+.ctx-chat .ft button:disabled { opacity:.6; cursor:not-allowed }
+
+.ctx-chat .chips { display:flex; gap:6px; flex-wrap: wrap; padding: 8px 12px; }
+.ctx-chat .chip { border:1px solid #263244; background:rgba(148,163,184,.10); padding:6px 8px; border-radius:999px; cursor:pointer; color:#cfe2ff; font-size:12px }
+.chip:hover{ background:rgba(148,163,184,.18) }
+
+.ctx-dot { width:8px; height:8px; border-radius:999px; display:inline-block; margin-right:6px; }
+.ctx-dot.ok{ background:#22c55e } .ctx-dot.warn{ background:#f59e0b } .ctx-dot.err{ background:#ef4444 }
+
+.ctx-hint{ color:#9fb3da; font-size:12px; padding: 0 12px 8px }
